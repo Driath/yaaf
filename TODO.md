@@ -45,6 +45,12 @@
 - [x] When TODO.md all done → fallback to `ia/my-work.md` work items
 - [ ] Auto-suggest workflows based on context (e.g., pending tickets → workflow:feature)
 
+## workflow (global rules)
+
+- [ ] Add rule: every `skill:format:out` response must append to `ia/state/history.json`
+- [ ] Define history.json format: `[{skill, timestamp, summary, status}]`
+- [ ] `workflow:end` reads last N entries to understand session context
+
 ## Cleanup
 
 - [ ] Remove "Background Monitoring" rule from `workflow/SKILL.md` (not its responsibility)

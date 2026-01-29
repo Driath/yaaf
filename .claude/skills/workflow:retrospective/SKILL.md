@@ -131,6 +131,10 @@ Follow `/skill:format:out`:
 - **User rejects all proposals** → Log for pattern recognition, exit gracefully
 - **Cannot parse skill output** → Note in friction points, suggest standardizing output
 
+## Final Step
+
+After presenting improvements, invoke `/workflow:end` to handle handoff.
+
 ## Example Session
 
 After `/workflow:pr` completes:
