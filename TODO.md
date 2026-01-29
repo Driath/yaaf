@@ -48,7 +48,9 @@
 
 ## workflow (global rules)
 
-- [ ] `workflow:end` should save session to `ia/state/sessions/` for later analysis
+- [ ] `workflow:end` should save session history to `ia/state/sessions/` for later analysis
+- [ ] Session history format: `[{skill, calledBy, timestamp, response}]`
+- [ ] Calculate and display workflow duration (start → end timestamps)
 - [ ] Use `session/scripts/save.ts` to archive sessions
 
 ### code:review
