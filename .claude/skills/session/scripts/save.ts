@@ -1,75 +1,71 @@
 #!/usr/bin/env bun
 
 /**
- * Archive session state to markdown and reset
+ * Archive session log to markdown and clear
  *
  * Usage:
- *   bun run save.ts workflow:pr
- *   bun run save.ts workflow:pr --status=completed
- *   bun run save.ts workflow:pr --status=failed --notes="CI blocked"
+ *   bun run save.ts
+ *   bun run save.ts --status=completed
+ *   bun run save.ts --status=failed --notes="CI blocked"
  */
 
 import { mkdir, unlink } from "node:fs/promises";
 
-const SESSIONS_DIR = "ia/state/sessions";
-const ARCHIVES_DIR = "ia/state/sessions/archives";
+const SESSION_FILE = "ia/state/session.json";
+const ARCHIVES_DIR = "ia/state/sessions";
 const args = Bun.argv.slice(2);
-
-if (!args[0]) {
-  console.error("Usage: save.ts <workflow:name> [--status=completed|failed] [--notes=...]");
-  process.exit(1);
-}
-
-const workflow = args[0];
-const filePath = `${SESSIONS_DIR}/${workflow}.json`;
 
 // Parse flags
 let status = "completed";
 let notes = "";
-for (const arg of args.slice(1)) {
+for (const arg of args) {
   if (arg.startsWith("--status=")) status = arg.split("=")[1];
   if (arg.startsWith("--notes=")) notes = arg.split("=").slice(1).join("=");
 }
 
-// Load state
-const file = Bun.file(filePath);
+// Load session log
+const file = Bun.file(SESSION_FILE);
 if (!(await file.exists())) {
-  console.error(`No session found for ${workflow}`);
-  process.exit(1);
+  console.log("No session to save");
+  process.exit(0);
 }
 
-const state = await file.json() as Record<string, unknown>;
+const log = await file.json() as Array<Record<string, unknown>>;
+
+if (log.length === 0) {
+  console.log("Empty session, nothing to save");
+  process.exit(0);
+}
+
+// Extract info from log
+const firstEntry = log[0];
+const lastEntry = log[log.length - 1];
+const mainWorkflow = firstEntry.skill as string;
+const startedAt = new Date(firstEntry.timestamp as string);
+const endedAt = new Date(lastEntry.timestamp as string);
+const durationMs = endedAt.getTime() - startedAt.getTime();
+const durationMin = Math.round(durationMs / 60000);
 
 // Generate archive filename
 const date = new Date().toISOString().split("T")[0];
-const context = state.context as Record<string, unknown> || {};
-const suffix = context.branch
-  ? `-${String(context.branch).replace(/[^a-zA-Z0-9-]/g, "-")}`
-  : "";
-const archiveName = `${date}-${workflow.replace(":", "-")}${suffix}.md`;
-
-// Calculate duration
-const startedAt = new Date(state.started_at as string);
-const duration = Math.round((Date.now() - startedAt.getTime()) / 60000);
+const time = new Date().toISOString().split("T")[1].slice(0, 5).replace(":", "");
+const archiveName = `${date}-${time}-${mainWorkflow.replace(/:/g, "-")}.md`;
 
 // Generate markdown
-const md = `# ${workflow} - ${date}
+const md = `# ${mainWorkflow} - ${date}
 
 **Status:** ${status}
-**Duration:** ${duration}min
+**Duration:** ${durationMin}min
+**Started:** ${firstEntry.timestamp}
+**Ended:** ${lastEntry.timestamp}
 
-## Context
-${Object.entries(context).map(([k, v]) => `- ${k}: ${v}`).join("\n") || "- (none)"}
+## Skill Calls
 
-## Steps
-${(state.steps as string[] || []).map((s, i, arr) =>
-  `${i + 1}. ${s}${i === arr.length - 1 ? ` (final)` : ` ✓`}`
-).join("\n") || "- (none)"}
-
-## Final State
-- Step: ${state.step}
-- Started: ${state.started_at}
-- Ended: ${new Date().toISOString()}
+| Skill | Called By | Response |
+|-------|-----------|----------|
+${log.map(entry =>
+  `| ${entry.skill} | ${entry.calledBy} | ${entry.response} |`
+).join("\n")}
 ${notes ? `\n## Notes\n${notes}` : ""}
 `;
 
@@ -80,8 +76,8 @@ await mkdir(ARCHIVES_DIR, { recursive: true });
 const archivePath = `${ARCHIVES_DIR}/${archiveName}`;
 await Bun.write(archivePath, md);
 
-// Delete session file
-await unlink(filePath);
+// Clear session log
+await unlink(SESSION_FILE);
 
 console.log(`Archived to ${archivePath}`);
 console.log(md);
