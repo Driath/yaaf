@@ -100,3 +100,36 @@ This ensures:
 - Output format is respected
 - HITL gates are honored
 - The full skill contract is executed
+
+## Session State
+
+Workflows track their progress in `ia/state/session/current.json` for resumability.
+
+### Format
+
+```json
+{
+  "workflow": "workflow:pr",
+  "started_at": "2024-01-29T10:30:00Z",
+  "step": "git:pr:monitor",
+  "context": {
+    "pr_number": 8,
+    "branch": "feat/workflow-start"
+  }
+}
+```
+
+### Rules
+
+1. **Workflow start** → Create/overwrite `current.json`
+2. **Sub-skill start** → Update `step` field
+3. **Context changes** → Update `context` (PR number, iteration, etc.)
+4. **Workflow end** → Archive to `ia/state/sessions/{name}.md` (optional), delete `current.json`
+
+### Resumability
+
+On `/start` or `/workflow:*`:
+1. Read `ia/state/session/current.json`
+2. If exists → Propose: "Reprendre {workflow} à l'étape {step} ?"
+3. If yes → Skip to that step with stored context
+4. If no → Clear and start fresh

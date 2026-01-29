@@ -13,31 +13,69 @@ Finalize workflow execution and propose next steps.
 /workflow:end
 ```
 
-No arguments - infers context from current session.
+No arguments - infers context from session state.
 
 ## Instructions
 
-### 1. Analyze Session Context
+### 1. Read Session State
 
-- Read `ia/state/history.json` if available (last N entries)
-- Identify what workflow/task was executed from conversation context
-- Note any new tasks discovered during execution
-- If no history and context unclear → ask user what was completed
+Read `ia/state/session/current.json`:
+- Extract workflow name, step, context
+- If not exists → rely on conversation context or ask user
 
-### 2. Update TODO.md
+### 2. Archive Session (HITL)
+
+Propose archiving the session:
+
+```
+Session: {workflow} completed
+Duration: {started_at → now}
+Context: {summary of context}
+
+Archiver cette session ?
+- Oui → génère ia/state/sessions/{date}-{workflow}-{context}.md
+- Non → supprime current.json sans archiver
+```
+
+**Archive format** (`ia/state/sessions/{name}.md`):
+```markdown
+# {workflow} - {date}
+
+## Context
+- Branch: {branch}
+- PR: #{number}
+- Duration: {duration}
+
+## Steps Executed
+1. {step1} - {status}
+2. {step2} - {status}
+...
+
+## Result
+{outcome summary}
+
+## Notes
+{any observations}
+```
+
+### 3. Clear Session State
+
+Delete `ia/state/session/current.json`
+
+### 4. Update TODO.md
 
 - Read `TODO.md`
 - Match completed work to items → mark as `[x]`
 - Add discovered tasks as new `[ ]` items under appropriate section
 - If no clear match, ask user what to mark done
 
-### 3. Find Next Task
+### 5. Find Next Task
 
 1. Parse TODO.md for first `- [ ]` item
 2. If none → read `ia/my-work.md`
 3. If nothing → "All clear!"
 
-### 4. Present Handoff (HITL)
+### 6. Present Handoff (HITL)
 
 Use AskUserQuestion with options:
 
@@ -46,7 +84,7 @@ Use AskUserQuestion with options:
 
 Wait for user choice before proceeding.
 
-### 5. Output
+### 7. Output
 
 Follow `/skill:format:out`:
 
@@ -55,7 +93,7 @@ Follow `/skill:format:out`:
 ✅ workflow:end completed
 
 ## Actions
-- Analyzed session: {workflow/task identified}
+- Session: {workflow} archived to {path} / cleared
 - Updated TODO.md: marked {X} done, added {Y} new
 - Next task: {task description or "none"}
 
@@ -66,15 +104,6 @@ Follow `/skill:format:out`:
 
 ## Error Handling
 
+- **No current.json** → Rely on conversation context or ask user
 - **No TODO.md** → Create one with discovered tasks
 - **No tasks to mark done** → Skip update, proceed to next task
-- **History unavailable** → Rely on conversation context or ask user
-
-## Dependencies
-
-> Note: `ia/state/history.json` is not yet implemented. Until then, rely on conversation context to identify completed work.
-
-Future: Every `skill:format:out` response should append to `ia/state/history.json` with format:
-```json
-[{"skill": "name", "timestamp": "ISO", "summary": "what was done", "status": "completed|failed"}]
-```

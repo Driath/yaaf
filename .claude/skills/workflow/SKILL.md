@@ -13,7 +13,34 @@ This skill is **not invoked directly**. It is loaded automatically via `CLAUDE.m
 
 ## Rules
 
-### 1. Retrospective After Completion
+### 1. Session State (Resumability)
+
+All workflows track their progress in `ia/state/session/current.json`.
+
+**On workflow start:**
+1. Check if `current.json` exists
+2. If exists and same workflow → HITL: "Reprendre {workflow} à l'étape {step} ?"
+   - Yes → Load context, skip to that step
+   - No → Delete `current.json`, start fresh
+3. If exists but different workflow → HITL: "Un workflow {other} est en cours. L'abandonner ?"
+4. Create/update `current.json`:
+   ```json
+   {
+     "workflow": "workflow:pr",
+     "started_at": "ISO",
+     "step": "init",
+     "context": {}
+   }
+   ```
+
+**On each step:**
+- Update `step` field before executing
+- Update `context` with relevant data (pr_number, branch, etc.)
+
+**On workflow end:**
+- Handled by `/workflow:end` (archive option + delete `current.json`)
+
+### 2. Retrospective After Completion
 
 After completing any `workflow:*`, execute `/workflow:retrospective` to:
 - Analyze what worked and what caused friction
