@@ -27,7 +27,9 @@ From `ia/context.md`:
 
 ### 1. Load Context
 
-Read `ia/context.md` to get git provider configuration.
+1. Read `ia/context.md` → workspace config (git provider, projects)
+2. For each sub-skill, check if `ia/skills/{skill-name}/instructions.md` exists:
+   - If yes → Load and pass as additional context to sub-skill
 
 ### 2. Verify Prerequisites
 
@@ -53,7 +55,7 @@ If PR exists → Skip to step 5
 
 ### 4. Create PR
 
-Execute `/git:pr:create title="{title}" base="{base}"`
+Execute `/git:pr:create title="{title}" base="{base}"` with additional context from `ia/skills/git:pr:create/instructions.md` if loaded.
 
 ### 5. Check PR Status
 

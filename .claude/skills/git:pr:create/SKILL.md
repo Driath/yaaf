@@ -20,8 +20,9 @@ Create a Pull Request / Merge Request for the current branch.
 
 ## Context Required
 
-From `ia/context.md`:
+Passed by orchestrator:
 - `git.provider`: github | gitlab | azure
+- Additional context from `ia/skills/git:pr:create/instructions.md` (if exists)
 
 ## Instructions
 
