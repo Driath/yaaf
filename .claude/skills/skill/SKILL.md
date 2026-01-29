@@ -90,3 +90,13 @@ Reference it in your skill: `Follow /skill:format:out`
 - **SKILL.md**: Quick start, essential steps (<500 lines)
 - **references/**: Detailed documentation
 - **scripts/**: Automation helpers
+
+## Skill Invocation
+
+When a skill instruction references a sub-skill (`Execute /skill:name` or similar), invoke it via the Skill tool - do not execute its steps manually.
+
+This ensures:
+- Sub-skill instructions are loaded and followed formally
+- Output format is respected
+- HITL gates are honored
+- The full skill contract is executed
