@@ -23,6 +23,27 @@ Passed by orchestrator:
 
 ## Instructions
 
+### 0. Launch Background Monitor
+
+Run the polling loop in background so the conversation remains interactive:
+
+```bash
+# Launch background monitor script
+Bash(run_in_background=true):
+  while true; do
+    gh pr view {pr.number} --json state,mergeable,reviewDecision,statusCheckRollup,reviews,comments
+    sleep {interval}
+  done
+```
+
+This returns a `task_id`. Use `TaskOutput(task_id, block=false)` to check status without blocking.
+
+**Key behavior:**
+- User can continue chatting while monitor runs
+- Check monitor output periodically (every few messages or when relevant)
+- React immediately when state changes (approval, comments, CI status)
+- Notify user of important changes inline in conversation
+
 ### 1. Initialize
 
 - Get initial PR status via `/git:pr:status`
@@ -152,3 +173,21 @@ PR #{number} merged successfully.
 - **Merge conflicts** → HITL, cannot auto-resolve
 - **Stuck on same comments** → HITL after 2 iterations
 - **CI keeps failing** → Continue polling, user may push fix
+
+## Background Mode Behavior
+
+When running in background:
+
+1. **User interrupts (Escape)** → Monitor keeps running, conversation continues
+2. **State change detected** → Notify user inline:
+   ```
+   🔔 PR #2 update: CI passed, waiting for approval
+   ```
+3. **Action required** → Prompt user:
+   ```
+   🔔 PR #2 approved! Ready to merge. On merge ?
+   ```
+4. **User asks about PR** → Check latest status and respond
+5. **Conversation ends** → Background task auto-terminates
+
+This allows collaborative decision-making while the PR progresses.
