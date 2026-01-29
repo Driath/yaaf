@@ -19,73 +19,116 @@ Passed by orchestrator:
 - `git.provider`: github | gitlab | azure
 - `pr.number`: PR number to monitor
 - `pr.url`: PR URL
-- `interval` (optional): Polling interval in seconds. Default: 30
+
+## Configuration
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `interval` | 30s | Time between polls |
+| `max_iterations` | 60 | Max polls before timeout (30min at 30s) |
+| `max_comment_retries` | 2 | Iterations stuck on same comments before HITL |
 
 ## Instructions
 
-### 0. Launch Background Monitor
+### Pattern: Cooperative Polling
 
-Run the polling loop in background so the conversation remains interactive:
+This skill uses **cooperative polling** - the agent controls when to poll rather than running a background loop. This keeps the conversation interactive and HITL natural.
 
-```bash
-# Launch background monitor script
-Bash(run_in_background=true):
-  while true; do
-    gh pr view {pr.number} --json state,mergeable,reviewDecision,statusCheckRollup,reviews,comments
-    sleep {interval}
-  done
 ```
-
-This returns a `task_id`. Use `TaskOutput(task_id, block=false)` to check status without blocking.
-
-**Key behavior:**
-- User can continue chatting while monitor runs
-- Check monitor output periodically (every few messages or when relevant)
-- React immediately when state changes (approval, comments, CI status)
-- Notify user of important changes inline in conversation
+┌─────────────────────────────────────────────────────┐
+│  Agent polls → Checks status → Reports to user     │
+│  User can chat → Agent responds → Agent polls again │
+│  State change → Agent reacts → Continues or HITL   │
+└─────────────────────────────────────────────────────┘
+```
 
 ### 1. Initialize
 
-- Get initial PR status via `/git:pr:status`
-- Store as `previous_state`
-
-### 2. Monitor Loop
+Get initial PR status via `/git:pr:status` and store as baseline:
 
 ```
-While PR is not mergeable:
+previous_state = {
+  ci_status: pending|passing|failing,
+  review_status: pending|approved|changes_requested,
+  comment_count: number,
+  has_conflicts: boolean,
+  mergeable: boolean
+}
+iteration = 0
+stuck_count = 0
+```
+
+### 2. Poll Loop
+
+Execute this loop until PR is mergeable or max_iterations reached:
+
+```
+WHILE iteration < max_iterations AND NOT mergeable:
 │
-├─ Check current status
+├─ Poll PR status (see "How to Poll" below)
+├─ Compare with previous_state
 │
-├─ IF CI pending:
-│   └─ Display "⏳ CI running..."
-│   └─ Wait {interval}s → continue
+├─ IF error polling:
+│   ├─ Retry up to 3 times with backoff
+│   └─ IF still failing → HITL: "Cannot reach GitHub. Check connection?"
 │
-├─ IF CI failing:
-│   └─ Display "❌ CI failed: {details}"
-│   └─ Wait {interval}s → continue (might be fixed by push)
+├─ IF PR closed/merged externally:
+│   └─ Exit: "PR was closed/merged externally"
 │
-├─ IF has new comments (compared to previous_state):
-│   ├─ Execute /code:review (traite les commentaires)
-│   ├─ Push fixes if any
-│   ├─ Compare new state with previous
-│   │   ├─ IF changed → update previous_state, continue
-│   │   └─ IF same after 2 iterations:
-│   │       └─ HITL: "Bloqué sur les mêmes commentaires. Besoin d'aide ?"
-│   └─ continue
+├─ IF CI status changed:
+│   ├─ pending → "⏳ CI running..."
+│   ├─ passing → "✅ CI passed!"
+│   └─ failing → "❌ CI failed: {summary}. Waiting for fix..."
 │
-├─ IF needs approval (no new comments):
-│   └─ Display "⏳ Waiting for reviewer approval..."
-│   └─ Wait {interval}s → continue
+├─ IF new comments (comment_count increased):
+│   ├─ Execute /code:review to process comments
+│   ├─ Push fixes if any changes made
+│   ├─ IF same comments after 2 iterations:
+│   │   └─ HITL: "Bloqué sur ces commentaires. Besoin d'aide ?"
+│   └─ Reset stuck_count, continue
 │
-├─ IF has conflicts:
-│   └─ HITL: "❌ Merge conflicts detected. Resolve manually."
-│   └─ Exit or wait for user
+├─ IF has_conflicts changed to true:
+│   └─ HITL: "❌ Merge conflicts. Resolve manually then tell me."
 │
-└─ IF mergeable:
-    └─ Go to step 3
+├─ IF mergeable:
+│   └─ Go to step 3
+│
+├─ Update previous_state = current_state
+├─ iteration++
+├─ Wait {interval}s (inform user: "Prochain check dans 30s...")
+└─ CONTINUE
+```
+
+### How to Poll
+
+Use a single background command to avoid blocking:
+
+**GitHub:**
+```bash
+Bash(run_in_background=true):
+  gh pr view {pr.number} --json state,mergeable,reviewDecision,statusCheckRollup,comments,reviews
+```
+
+Then retrieve with:
+```
+TaskOutput(task_id, block=true, timeout=10000)
+```
+
+**GitLab:**
+```bash
+Bash(run_in_background=true):
+  glab mr view {pr.number} --output json
+```
+
+**Azure:**
+```bash
+Bash(run_in_background=true):
+  az repos pr show --id {pr.number} --output json
 ```
 
 ### 3. Ready to Merge
+
+When PR is mergeable, display status and ask user:
 
 ```
 ✅ PR #{number} is ready to merge!
@@ -95,27 +138,29 @@ While PR is not mergeable:
 | CI | ✅ Passing |
 | Reviews | ✅ Approved |
 | Conflicts | ✅ None |
+
+Monitored for {iteration} iterations ({duration}).
 ```
 
-HITL: "Merge maintenant ?"
+**HITL:** "Merge maintenant ?"
 - Yes → Execute merge (step 4)
-- No → Exit
+- No → Exit without merging
 
 ### 4. Merge
 
 **GitHub:**
 ```bash
-gh pr merge {pr.number} --merge
+gh pr merge {pr.number} --merge --delete-branch
 ```
 
 **GitLab:**
 ```bash
-glab mr merge {pr.number}
+glab mr merge {pr.number} --remove-source-branch
 ```
 
 **Azure:**
 ```bash
-az repos pr update --id {pr.number} --status completed
+az repos pr update --id {pr.number} --status completed --delete-source-branch
 ```
 
 ### 5. Output
@@ -127,67 +172,97 @@ Follow `/skill:format:out`:
 ✅ git:pr:monitor completed
 
 ## Actions
-- Monitored PR #{number} for {duration}
+- Monitored PR #{number} for {iteration} iterations ({duration})
+- CI: {status_changes_summary}
+- Reviews: {review_summary}
 - Processed {X} review comments via code:review
-- PR approved by @{reviewer}
-- Merged to {base}
+- Merged to {base} ✅
 
 ## Result
 PR #{number} merged successfully.
 
 ## Corrections
-- {fixes applied during code:review}
+- {list of fixes applied during code:review}
 
 ## Notes
-- Waited {X} iterations
 - {any blockers encountered}
+- {HITL decisions made}
 ---
 ```
 
-## State Machine Summary
+## State Machine
 
 ```
 ┌─────────────┐
-│ CI Pending  │◄─────────────────┐
-└──────┬──────┘                  │
-       │ CI done                 │ push
-       ▼                         │
-┌─────────────┐    comments  ┌───┴───────────┐
-│ CI Passing  │─────────────►│ code:review│
-└──────┬──────┘              └───────────────┘
-       │
+│   Start     │
+└──────┬──────┘
+       │ get initial status
        ▼
 ┌─────────────┐
-│Need Approval│◄──── wait 30s
+│ CI Pending  │◄─────────────────────────┐
+└──────┬──────┘                          │
+       │ CI completes                    │ push after review
+       ▼                                 │
+┌─────────────┐    new comments    ┌─────┴─────────┐
+│ CI Passed   │───────────────────►│ code:review   │
+└──────┬──────┘                    └───────────────┘
+       │ CI failing
+       ▼
+┌─────────────┐
+│ CI Failed   │◄──── wait for external fix
+└──────┬──────┘
+       │ CI passes again
+       ▼
+┌─────────────┐
+│Need Approval│◄──── poll every {interval}
 └──────┬──────┘
        │ approved
        ▼
+┌─────────────┐    conflicts    ┌───────────┐
+│  Mergeable  │────────────────►│   HITL    │
+└──────┬──────┘                 └───────────┘
+       │ user confirms
+       ▼
 ┌─────────────┐
-│  Mergeable  │──── HITL ───► Merge
+│   Merged    │
 └─────────────┘
 ```
 
 ## Error Handling
 
-- **PR closed** → Exit with message
-- **Merge conflicts** → HITL, cannot auto-resolve
-- **Stuck on same comments** → HITL after 2 iterations
-- **CI keeps failing** → Continue polling, user may push fix
+| Error | Response |
+|-------|----------|
+| Network timeout | Retry 3x with exponential backoff (5s, 15s, 45s) |
+| PR not found | Exit: "PR #{number} not found. Was it deleted?" |
+| PR closed externally | Exit: "PR was closed. Nothing to monitor." |
+| PR merged externally | Exit: "PR already merged!" |
+| Auth expired | HITL: "GitHub auth expired. Run `gh auth login` then tell me." |
+| Max iterations reached | HITL: "Monitoring timeout after {duration}. Continue?" |
+| Stuck on comments | HITL after 2 iterations on same unresolved comments |
+| Merge conflicts | HITL: Cannot auto-resolve, user must fix |
 
-## Background Mode Behavior
+## HITL Gates
 
-When running in background:
+The skill pauses for human input at these points:
 
-1. **User interrupts (Escape)** → Monitor keeps running, conversation continues
-2. **State change detected** → Notify user inline:
-   ```
-   🔔 PR #2 update: CI passed, waiting for approval
-   ```
-3. **Action required** → Prompt user:
-   ```
-   🔔 PR #2 approved! Ready to merge. On merge ?
-   ```
-4. **User asks about PR** → Check latest status and respond
-5. **Conversation ends** → Background task auto-terminates
+| Gate | Trigger | User Options |
+|------|---------|--------------|
+| Merge confirmation | PR is mergeable | Yes / No |
+| Conflict resolution | Merge conflicts detected | "Fixed, continue" / "Cancel" |
+| Stuck comments | Same comments after 2 code:review cycles | Help resolve / Skip / Cancel |
+| Timeout | Max iterations reached | Continue / Cancel |
+| Auth error | GitHub CLI not authenticated | "Fixed, continue" / "Cancel" |
 
-This allows collaborative decision-making while the PR progresses.
+## Interactive Behavior
+
+During monitoring, the user can:
+- **Ask questions** → Agent responds, then continues monitoring
+- **Request status** → Agent shows current state immediately
+- **Cancel monitoring** → Agent stops and reports final state
+- **Chat about other things** → Agent handles, notes to check PR soon
+
+The agent should:
+- Inform user before each wait: "⏳ CI still running. Checking again in 30s..."
+- React immediately to state changes
+- Keep status updates concise
+- Use HITL gates, not just inform (for decisions)
