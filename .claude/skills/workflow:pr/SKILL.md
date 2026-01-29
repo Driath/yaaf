@@ -51,21 +51,19 @@ If on main/master → Error: "Cannot create PR from main branch"
 
 Execute `/git:pr:find`
 
-If PR exists → Skip to step 5
+If PR exists → Skip to step 4
 
 ### 4. Create PR
 
 Execute `/git:pr:create title="{title}" base="{base}"` with additional context from `ia/skills/git:pr:create/instructions.md` if loaded.
 
-### 5. Check PR Status
-
-Execute `/git:pr:status`
-
-### 6. Monitor PR
+### 5. Monitor PR
 
 Execute `/git:pr:monitor` to poll until PR is mergeable (CI passes, reviews approved, no conflicts).
 
-### 7. Output
+Note: `/git:pr:monitor` calls `/git:pr:status` internally at each poll iteration.
+
+### 6. Output
 
 Aggregate outputs from sub-skills following `/skill:format:out`:
 
@@ -76,7 +74,6 @@ Aggregate outputs from sub-skills following `/skill:format:out`:
 ## Actions
 - {from git:pr:find}
 - {from git:pr:create}
-- {from git:pr:status}
 - {from git:pr:monitor}
 
 ## Result
@@ -124,5 +121,4 @@ PR #{number}: {url}
 |-------|---------|
 | `git:pr:find` | Find existing PR for current branch |
 | `git:pr:create` | Create new PR if none exists |
-| `git:pr:status` | Check CI, reviews, conflicts |
-| `git:pr:monitor` | Poll until mergeable, react to comments/CI |
+| `git:pr:monitor` | Poll until mergeable (calls `git:pr:status` internally) |
