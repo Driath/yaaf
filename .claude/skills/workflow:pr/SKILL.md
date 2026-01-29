@@ -61,7 +61,11 @@ Execute `/git:pr:create title="{title}" base="{base}"` with additional context f
 
 Execute `/git:pr:status`
 
-### 6. Output
+### 6. Monitor PR
+
+Execute `/git:pr:monitor` to poll until PR is mergeable (CI passes, reviews approved, no conflicts).
+
+### 7. Output
 
 Aggregate outputs from sub-skills following `/skill:format:out`:
 
@@ -73,6 +77,7 @@ Aggregate outputs from sub-skills following `/skill:format:out`:
 - {from git:pr:find}
 - {from git:pr:create}
 - {from git:pr:status}
+- {from git:pr:monitor}
 
 ## Result
 
@@ -120,3 +125,4 @@ PR #{number}: {url}
 | `git:pr:find` | Find existing PR for current branch |
 | `git:pr:create` | Create new PR if none exists |
 | `git:pr:status` | Check CI, reviews, conflicts |
+| `git:pr:monitor` | Poll until mergeable, react to comments/CI |
