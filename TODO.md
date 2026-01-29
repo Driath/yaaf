@@ -43,6 +43,7 @@
 ## Session Flow
 
 - [x] When TODO.md all done → fallback to `ia/my-work.md` work items
+- [x] `/start` skill - analyze TODO.md + history.json to suggest best next task
 - [ ] Auto-suggest workflows based on context (e.g., pending tickets → workflow:feature)
 
 ## workflow (global rules)

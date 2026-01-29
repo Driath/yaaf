@@ -21,14 +21,10 @@ Actions requiring EXPLICIT confirmation (HITL via AskUserQuestion):
 
 **Never assume approval.** Ask, wait, then act.
 
-## Session Start
+## Session Flow
 
-At the beginning of any session:
-
-1. Read `TODO.md` for pending tasks
-2. If pending → Suggest: "Continue with {highest priority task}?"
-3. If all done → Read `ia/my-work.md` for work items
-4. If nothing → "All clear! What do you want to work on?"
+- **Start**: Run `/start` after `/clear` to get task suggestions
+- **End**: Run `/workflow:end` to update TODO.md and handoff
 
 ## Workflow Handoff (mandatory)
 
