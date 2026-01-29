@@ -43,24 +43,14 @@ git rev-parse --is-inside-work-tree
 # Get current branch
 git branch --show-current
 
-# Check for uncommitted changes
-git status --short
-
 # Check we have commits ahead of base
 git log origin/{base}..HEAD --oneline
 ```
 
-**If on main/master:**
-1. Check for uncommitted changes
-2. If changes exist:
-   - Derive branch name from changes (e.g., `feat/improve-pr-monitor` from modified files)
-   - Create branch: `git checkout -b {branch-name}`
-   - Stage and commit changes with descriptive message
-   - Continue to step 3
-3. If no changes and no commits ahead → Error: "Nothing to push, make changes first"
-
-**If not on main:**
-- If no commits ahead → Error: "Nothing to push"
+**Important:** This workflow does NOT commit changes. It works with existing commits only.
+- If uncommitted changes → Warn: "⚠️ Uncommitted changes detected (ignored)" and continue
+- If no commits ahead of base → Error: "Nothing to push, commit first"
+- If on main/master with no feature branch → Error: "Create a feature branch first"
 
 ### 3. Check for Existing PR
 
@@ -113,8 +103,8 @@ PR #{number}: {url}
 ## Error Handling
 
 - **No git repo** → Error with clear message
-- **No changes and no commits** → "Nothing to push, make changes first"
-- **On main with changes** → Auto-create branch and commit (not an error)
+- **No commits ahead** → "Nothing to push, commit first"
+- **On main/master** → "Create a feature branch first"
 - **Sub-skill fails** → Surface error from sub-skill
 
 ## Examples

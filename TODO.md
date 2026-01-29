@@ -43,7 +43,18 @@
 ## Session Flow
 
 - [x] When TODO.md all done → fallback to `ia/my-work.md` work items
+- [x] `/start` skill - analyze TODO.md + history.json to suggest best next task
 - [ ] Auto-suggest workflows based on context (e.g., pending tickets → workflow:feature)
+
+## workflow (global rules)
+
+- [ ] `workflow:end` should save session history to `ia/state/sessions/` for later analysis
+- [ ] Session history format: `[{skill, calledBy, timestamp, response}]`
+- [ ] Calculate and display workflow duration (start → end timestamps)
+- [ ] Use `session/scripts/save.ts` to archive sessions
+
+### code:review
+- [ ] Check code is in English (comments, variables, docs) - translate if French found
 
 ## Cleanup
 
