@@ -2,6 +2,9 @@
 
 Agent skills framework for Claude Code.
 
-## Global Rules
+## Primitives
 
-Read `.claude/skills/workflow/SKILL.md` for workflow rules.
+Load these at session start:
+
+- `.claude/skills/workflow/SKILL.md` - workflow rules
+- `.claude/skills/skill/SKILL.md` - skill design primitives

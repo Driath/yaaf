@@ -8,6 +8,14 @@
 
 Site: matthieuczeski.atlassian.net
 
+## Git Settings
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| provider | github | github, gitlab, azure |
+| base_branch | main | Default base for PRs (main, develop for gitflow) |
+| branch_strategy | github-flow | github-flow, gitflow, trunk-based |
+
 ## Projects
 
 | name | path | type | jira-project | jira-board | git |
