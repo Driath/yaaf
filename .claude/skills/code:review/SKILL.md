@@ -60,21 +60,58 @@ Analyze code for:
 
 ### 4. Address PR Comments (if PR context)
 
-For each unresolved comment:
+Get current user and categorize comments by author:
+
+```
+current_user = git config user.email / gh api user
+```
+
+#### 4a. My Own Comments (self-review)
+
+For each of my unresolved comments:
 
 ```
 1. Analyze comment
-2. Determine if auto-fixable:
-   - ✅ Linter errors → Auto
-   - ✅ Type errors → Auto
-   - ✅ Missing null checks → Auto
-   - ✅ "Add tests" → Auto (if straightforward)
-   - ❌ "Why did you do X?" → Needs human
-3. If auto-fixable:
+2. IF understood AND pertinent:
    - Implement fix
    - Reply in thread: "Fixed by [commit]"
-4. If needs human:
-   - Flag for HITL
+   - Resolve conversation
+3. IF not pertinent OR unclear:
+   - HITL: "Tu as laissé ce commentaire: '{comment}'
+           Je ne suis pas sûr de comprendre / ça me semble pas pertinent parce que {reason}.
+           On fait quoi ?"
+   - IF user clarifies → implement and resolve
+   - IF user dismisses → resolve without action
+```
+
+#### 4b. External Reviewer Comments
+
+For comments from other reviewers:
+
+```
+1. Group all unresolved comments
+2. Create action plan:
+
+   ## Plan d'action pour les commentaires de @{reviewer}
+
+   | # | Comment | Proposed Action | Confidence |
+   |---|---------|-----------------|------------|
+   | 1 | "Add error handling" | Add try-catch in api.ts:42 | ✅ High |
+   | 2 | "Why this approach?" | Explain in thread (no code change) | 🟡 Medium |
+   | 3 | "Consider using X" | Refactor to use X | ❓ Need input |
+
+3. HITL: Present plan to user
+   - "Voici mon plan pour traiter les commentaires. OK ?"
+
+4. IF plan NOT OK:
+   - User provides feedback
+   - Revise plan
+   - HITL again until approved
+
+5. IF plan OK:
+   - Execute each action
+   - Reply to each thread with action taken
+   - DO NOT resolve (reviewer should resolve their own comments)
 ```
 
 ### 5. Apply Fixes
@@ -86,6 +123,11 @@ git commit -m "fix: address review feedback
 
 - [list of fixes]"
 git push
+```
+
+Inform user:
+```
+✅ Fixes pushed. En attente de re-review par @{reviewer}.
 ```
 
 ### 6. Output
