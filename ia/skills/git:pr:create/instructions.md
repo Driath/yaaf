@@ -9,9 +9,6 @@ When creating a PR:
 gh pr create ... --reviewer {reviewer}
 ```
 
-If no reviewer specified, ask user:
-"Qui doit review cette PR ?"
-
 ## PR Template
 
 Include in body:
