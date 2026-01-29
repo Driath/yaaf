@@ -21,12 +21,21 @@ Actions requiring EXPLICIT confirmation (HITL via AskUserQuestion):
 
 **Never assume approval.** Ask, wait, then act.
 
+## Session Start
+
+At the beginning of any session:
+
+1. Read `TODO.md` for pending tasks
+2. If pending → Suggest: "Continue with {highest priority task}?"
+3. If all done → Read `ia/my-work.md` for work items
+4. If nothing → "All clear! What do you want to work on?"
+
 ## Workflow Handoff (mandatory)
 
 After completing ANY `workflow:*`:
 
-1. Read `TODO.md` for pending tasks
-2. Suggest next highest-priority task
-3. Ask: "Next: {task}. /clear to start fresh?"
+1. Update `TODO.md` (mark done, add new tasks discovered)
+2. Suggest next task from TODO.md
+3. Ask: "/clear to start fresh?"
 
-This keeps the improvement cycle continuous. yaaf always points to what's next.
+This keeps the improvement cycle continuous.
