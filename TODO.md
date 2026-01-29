@@ -48,9 +48,11 @@
 
 ## workflow (global rules)
 
-- [ ] Add rule: every `skill:format:out` response must append to `ia/state/history.json`
-- [ ] Define history.json format: `[{skill, timestamp, summary, status}]`
-- [ ] `workflow:end` reads last N entries to understand session context
+- [ ] `workflow:end` should save session to `ia/state/sessions/` for later analysis
+- [ ] Use `session/scripts/save.ts` to archive sessions
+
+### code:review
+- [ ] Check code is in English (comments, variables, docs) - translate if French found
 
 ## Cleanup
 
