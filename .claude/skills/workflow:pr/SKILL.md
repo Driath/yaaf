@@ -16,19 +16,22 @@ Orchestrator that creates a Pull Request and checks its mergeable status.
 ## Arguments
 
 - `title` (optional): PR title. If not provided, derives from branch name or commits.
-- `base` (optional): Base branch. Default: `main`
+- `base` (optional): Base branch. Default: from context or `main`
 
 ## Context Required
 
 From `ia/context.md`:
 - `git.provider`: github | gitlab | azure
+- `git.base_branch` (optional): Default base for PRs (e.g., `develop` for gitflow)
+- `git.branch_strategy` (optional): github-flow | gitflow | trunk-based
 
 ## Instructions
 
 ### 1. Load Context
 
 1. Read `ia/context.md` → workspace config (git provider, projects)
-2. For each sub-skill, check if `ia/skills/{skill-name}/instructions.md` exists:
+2. Extract `git.base_branch` if present → use as default for `base` parameter
+3. For each sub-skill, check if `ia/skills/{skill-name}/instructions.md` exists:
    - If yes → Load and pass as additional context to sub-skill
 
 ### 2. Verify Prerequisites
