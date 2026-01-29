@@ -27,7 +27,7 @@ At the beginning of any session:
 
 1. Read `TODO.md` for pending tasks
 2. If pending → Suggest: "Continue with {highest priority task}?"
-3. If all done → Read `ia/context.md` for work items (Jira, etc.)
+3. If all done → Read `ia/my-work.md` for work items
 4. If nothing → "All clear! What do you want to work on?"
 
 ## Workflow Handoff (mandatory)

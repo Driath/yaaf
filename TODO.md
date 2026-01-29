@@ -42,7 +42,7 @@
 
 ## Session Flow
 
-- [ ] When TODO.md all done → fallback to `ia/context.md` work items (Jira integration)
+- [x] When TODO.md all done → fallback to `ia/my-work.md` work items
 - [ ] Auto-suggest workflows based on context (e.g., pending tickets → workflow:feature)
 
 ## Cleanup
