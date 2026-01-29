@@ -20,3 +20,13 @@ Actions requiring EXPLICIT confirmation (HITL via AskUserQuestion):
 - Any override of safety mechanisms
 
 **Never assume approval.** Ask, wait, then act.
+
+## Workflow Handoff (mandatory)
+
+After completing ANY `workflow:*`:
+
+1. Read `TODO.md` for pending tasks
+2. Suggest next highest-priority task
+3. Ask: "Next: {task}. /clear to start fresh?"
+
+This keeps the improvement cycle continuous. yaaf always points to what's next.
