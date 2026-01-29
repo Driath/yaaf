@@ -2,9 +2,6 @@
 
 Agent skills framework for Claude Code.
 
-## Workflow Rules
+## Global Rules
 
-After completing any `workflow:*`, execute `/workflow:retrospective` to:
-- Analyze what worked and what caused friction
-- Propose concrete improvements to skills used
-- Apply approved improvements directly to skill files
+Read `.claude/skills/workflow/SKILL.md` for workflow rules.
