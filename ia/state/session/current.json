@@ -1,6 +1,0 @@
-{
-  "workflow": "workflow:pr",
-  "started_at": "2025-01-29T15:00:00Z",
-  "step": "init",
-  "context": {}
-}

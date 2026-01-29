@@ -1,8 +1,15 @@
 {
   "started_at": "2026-01-29T22:42:48.473Z",
   "steps": [
-    "init"
+    "init",
+    "git:pr:find",
+    "git:pr:monitor"
   ],
-  "step": "init",
-  "updated_at": "2026-01-29T22:42:48.473Z"
+  "step": "git:pr:monitor",
+  "updated_at": "2026-01-29T22:43:31.337Z",
+  "context": {
+    "branch": "feat/workflow-start",
+    "pr_number": 8,
+    "pr_url": "https://github.com/Driath/yaaf/pull/8"
+  }
 }

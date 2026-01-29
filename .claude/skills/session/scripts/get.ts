@@ -45,8 +45,13 @@ if (args[0] === "--all") {
   const sessions = await getAllActiveSessions();
   console.log(JSON.stringify(sessions, null, 2));
 } else if (args[0]) {
-  const state = await getWorkflowState(args[0]);
-  console.log(state ? JSON.stringify(state, null, 2) : "null");
+  const state = await getWorkflowState(args[0]) as Record<string, unknown> | null;
+  if (state) {
+    console.error(`\n🔄 Restoring state: relaunching from step "${state.step}"\n`);
+    console.log(JSON.stringify(state, null, 2));
+  } else {
+    console.log("null");
+  }
 } else {
   console.error("Usage: get.ts <workflow:name> | --all");
   process.exit(1);
