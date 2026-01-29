@@ -15,4 +15,5 @@ node_modules/
 
 # Local/temporary
 plans/
-scripts/
+/scripts/
+!.claude/skills/**/scripts/
