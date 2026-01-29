@@ -67,12 +67,14 @@ PR #{number}: {url}
 Present options via AskUserQuestion:
 
 ```
-⏳ PR #{number} - {status summary}
+⏳ PR #{number}: {url}
+
+| CI | {status} | Reviews | {status} | Conflicts | {status} |
 
 Options:
 - "Recheck maintenant" (Recommandé)
 - "Recheck dans 3 min"
-- "Sortir du workflow" → state persiste, exit
+- "Sortir du workflow"
 ```
 
 **Actions:**
