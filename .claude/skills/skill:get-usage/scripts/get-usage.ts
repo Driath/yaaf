@@ -1,0 +1,1 @@
+../../../../scripts/get-skill-usage.ts
