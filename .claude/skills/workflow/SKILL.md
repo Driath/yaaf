@@ -100,40 +100,51 @@ Auto-proceed for:
 
 ### 5. Statusline & Duration Tracking
 
-Every workflow must display a statusline during execution. **Only count sub-skills in progress**, not internal orchestrator steps.
+Every workflow must display a statusline during execution. **Only count sub-skills**, not internal orchestrator steps.
 
-**Orchestrator format:**
+**Start of workflow:**
 ```
-[skill/total] {workflow-name} ({model}) | {elapsed}
+{workflow-name} ({model})
 ```
 
-**Worker (sub-skill) format:**
+**Each sub-skill (as it completes):**
 ```
-  └─ {skill-name} ({agent}, {model}) → {result}
+[skill/total] {skill-name} ({agent}, {model}) → {result}
 ```
 
 **Fields:**
 - `skill/total`: Current sub-skill number / total sub-skills in workflow
-- `workflow-name`: Name of the workflow being orchestrated
 - `skill-name`: Name of the sub-skill being executed
 - `agent`: Agent type from skill header (Explore, general-purpose) - omit if `workflow` (default)
-- `model`: Model used - omit if `haiku` (default)
-- `elapsed`: Time since workflow start
+- `model`: Model used
 - `result`: Brief outcome of the sub-skill
 
-**Example during execution:**
+**End of workflow (summary):**
 ```
-[1/3] workflow:pr (opus) | 0m
-  └─ git:pr:find (Explore, sonnet) → No PR found
-[2/3] workflow:pr (opus) | 1m
-  └─ git:pr:create (haiku) → PR #16 created
-[3/3] workflow:pr (opus) | 2m
-  └─ git:pr:monitor (haiku) → Ready to merge
+---
+{workflow-name} ({model}) | {duration}
+
+[1/3] {skill-name} ({agent}, {model}) → {result}
+[2/3] {skill-name} ({model}) → {result}
+[3/3] {skill-name} ({model}) → {result}
+---
 ```
 
-Note: When agent is `workflow` (default), omit it. Always show model for transparency.
+**Example:**
+```
+workflow:pr (opus)
 
-**At workflow completion, include total duration:**
+[1/3] git:pr:find (Explore, sonnet) → No PR found
+[2/3] git:pr:create (haiku) → PR #16 created
+[3/3] git:pr:monitor (haiku) → Blocked (review required)
+
+---
+workflow:pr (opus) | 1m
+
+[1/3] git:pr:find (Explore, sonnet) → No PR found
+[2/3] git:pr:create (haiku) → PR #16 created
+[3/3] git:pr:monitor (haiku) → Blocked (review required)
+---
 ```
-Duration: Xm
-```
+
+Note: When agent is `workflow` (default), omit it.
