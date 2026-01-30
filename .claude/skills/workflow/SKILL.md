@@ -76,25 +76,35 @@ Auto-proceed for:
 - Simple/clear self-review comments
 - Status polling
 
-### 5. Progress & Duration Tracking
+### 5. Statusline & Duration Tracking
 
-Every workflow must track and display progress and duration:
+Every workflow (and sub-agents) must display a statusline during execution:
 
-**Progress tracking:**
-1. Count total steps from the skill's instructions (### 1, ### 2, etc.)
-2. Display current step during execution: `[2/5] Creating PR...`
-
-**Duration tracking:**
-1. Note the current time at workflow start
-2. Calculate elapsed time at workflow end
-
-**Output format during execution:**
+**Statusline format:**
 ```
-[1/5] Loading context...
-[2/5] Verifying prerequisites...
+[step/total] | agent: {agent} | skill: {skill} | model: {model} | elapsed: {time}
 ```
 
-**Output format at completion:**
+**Fields:**
+- `step/total`: Current step and total steps (from skill's ### sections)
+- `agent`: Agent type (workflow, Explore, Plan, etc.)
+- `skill`: Current skill being executed (or `-` if none)
+- `model`: Model used (opus, sonnet, haiku)
+- `elapsed`: Time since workflow start
+
+**Example during execution:**
+```
+[1/6] | agent: workflow | skill: - | model: opus | elapsed: 0m
+[3/6] | agent: workflow | skill: git:pr:find | model: opus | elapsed: 1m
+```
+
+**Sub-agents spawned via Task must also display their statusline:**
+```
+[3/6] | agent: workflow | skill: git:pr:find | model: opus | elapsed: 1m
+  └─ [1/2] | agent: Explore | skill: - | model: haiku | elapsed: 0m
+```
+
+**At workflow completion, include total duration:**
 ```
 Duration: Xh Ym (or Xm if under 1 hour)
 ```
