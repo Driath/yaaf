@@ -142,12 +142,14 @@ Every workflow must display a statusline during execution. **Only count sub-skil
 **End of workflow (summary):**
 ```
 ---
-${workflowName} (${model}) | ${duration}
+${workflowName} (${model}) | ${timestamp}
 
 [${step}/${total}] ${statusIcon} | ⚡ ${skillName} | 🤖 ${agent} | 🧠 ${model} | → ${result}
 ...
 ---
 ```
+
+**Timestamp format:** ISO 8601 `YYYY-MM-DDTHH:MM:SS` (local time)
 
 **Example:**
 ```
@@ -158,7 +160,7 @@ workflow:pr (opus)
 [3/3] ⏳ | ⚡ git:pr:monitor | 🤖 workflow | 🧠 haiku | → Blocked (review required)
 
 ---
-workflow:pr (opus) | 1m
+workflow:pr (opus) | 2026-01-30T14:32:07
 
 [1/3] ✓ | ⚡ git:pr:find    | 🤖 workflow | 🧠 haiku | → Found PR #18
 [2/3] ⏭ | ⚡ git:pr:create  | 🤖 workflow | 🧠 haiku | → SKIPPED (PR exists)
