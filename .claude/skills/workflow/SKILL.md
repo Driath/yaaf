@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Global workflow rules. Loaded by agent at session start.
+description: Global workflow rules. Loaded automatically by any workflow:* skill.
 ---
 
 # workflow
@@ -9,7 +9,7 @@ Global rules that apply to all `workflow:*` skills.
 
 ## Usage
 
-This skill is **not invoked directly**. It is loaded automatically via `CLAUDE.md` at session start.
+This skill is **not invoked directly**. By naming convention, any skill named `workflow:*` automatically loads and applies these rules before execution.
 
 ## Rules
 
