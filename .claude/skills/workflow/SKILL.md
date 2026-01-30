@@ -47,7 +47,7 @@ After completing any `workflow:*`, execute `/workflow:retrospective` to:
 - Propose concrete improvements to skills used
 - Apply approved improvements directly to skill files
 
-### 2. Nested Workflow Behavior
+### 3. Nested Workflow Behavior
 
 When a workflow calls another workflow:
 
@@ -62,13 +62,6 @@ IF new agent context (Task spawn with custom model/agent):
 ```
 
 This prevents cascading retrospectives while ensuring each independent agent session learns from its execution.
-
-### 3. Background Monitoring
-
-When using `/git:pr:monitor` or similar long-running skills:
-- Run in background mode when possible
-- Keep conversation interactive
-- Notify user of state changes inline
 
 ### 4. HITL Gates
 
