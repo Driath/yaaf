@@ -55,6 +55,7 @@
 
 ## workflow (global rules)
 
+- [ ] Add `agent` field to skill header (default: workflow, options: workflow/Explore/general-purpose)
 - [ ] `workflow:end` should save session history to `ia/state/sessions/` for later analysis
 - [ ] Explore skill callbacks pattern - where should the responsibility? (from PR #12)
 - [ ] Agent workflow responsibility for /skill/scripts/set-session (from PR #12)

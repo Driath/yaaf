@@ -2,12 +2,12 @@
 
 Agent skills framework for Claude Code.
 
-## Primitives
+## Naming Conventions
 
-Load these at session start:
+Skills follow naming conventions that trigger automatic behavior:
 
-- `.claude/skills/workflow/SKILL.md` - workflow rules
-- `.claude/skills/skill/SKILL.md` - skill design primitives
+- `workflow:*` → Loads `.claude/skills/workflow/SKILL.md` before execution
+- `skill:*` → Loads `.claude/skills/skill/SKILL.md` before execution
 
 ## Security Rules (always apply)
 
