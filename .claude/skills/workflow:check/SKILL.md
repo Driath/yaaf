@@ -64,21 +64,26 @@ ls .claude/skills/{sub-skill}/SKILL.md
 - If exists → ✅ Sub-skill found
 - If missing → ❌ WE001: Sub-skill not found
 
-### 3b. Validate Sub-skills Status (V2)
+### 3b. Validate Sub-skills (Deep Validation)
 
-Read `ia/state/skills.md` and check validation status for each sub-skill:
+Execute `/skill:check {sub-skill}` for each detected sub-skill to get live validation results:
 
-1. Parse the skills table to get each sub-skill's score and status
-2. For each detected sub-skill:
-   - If found in skills.md with status ✅ → Sub-skill validated
-   - If found with status ⚠️ → WE002: Sub-skill has warnings
-   - If found with status ❌ → WE003: Sub-skill is critical
-   - If not in skills.md → WE004: Sub-skill not validated (run `skill:check --all`)
+1. For each detected sub-skill:
+   - Run `/skill:check {sub-skill}`
+   - Capture score and status from output
+   - Record: score, status (✅/⚠️/❌), and any corrections needed
+
+2. Aggregate results:
+   - If score 100% → ✅ Sub-skill valid
+   - If score 50-99% → ⚠️ WE002: Sub-skill has warnings
+   - If score <50% → ❌ WE003: Sub-skill is critical
 
 **Scoring impact:**
 - All sub-skills ✅ → +0 (no penalty)
 - Any sub-skill ⚠️ → Warning in output
 - Any sub-skill ❌ → Workflow marked ❌ Critical
+
+**Note:** This is live validation, not cached. Results may differ from `ia/state/skills.md`.
 
 ### 4. Handle --all Flag
 
@@ -104,15 +109,17 @@ Create/update `ia/state/workflows.md`:
 
 | Workflow | Base Score | Sub-skills Exist | Sub-skills Valid | Status |
 |----------|------------|------------------|------------------|--------|
-| workflow:pr | 8/12 (67%) | 3/3 ✅ | 0/3 (3⚠️) | ⚠️ |
+| workflow:pr | 8/12 (67%) | 3/3 ✅ | 0/3 ✅ | ⚠️ |
 | workflow:end | 10/12 (83%) | 1/1 ✅ | 1/1 ✅ | ⚠️ |
 
-## Sub-skills Dependencies
+## Sub-skills Deep Validation
 
-| Workflow | Sub-skills | Validation Status |
-|----------|------------|-------------------|
-| workflow:pr | git:pr:find, git:pr:create, git:pr:monitor | ⚠️ 67%, ⚠️ 67%, ⚠️ 67% |
-| workflow:end | skill:format:out | ⚠️ 89% |
+| Workflow | Sub-skill | Score | Status |
+|----------|-----------|-------|--------|
+| workflow:pr | git:pr:find | 8/12 (67%) | ⚠️ |
+| workflow:pr | git:pr:create | 8/12 (67%) | ⚠️ |
+| workflow:pr | git:pr:monitor | 8/12 (67%) | ⚠️ |
+| workflow:end | skill:format:out | 11/12 (92%) | ⚠️ |
 
 ## Status Thresholds
 
@@ -135,7 +142,7 @@ Follow `/skill:format:out`:
 - Ran skill:check: {score}/12
 - Detected sub-skills: {list}
 - Validated sub-skills exist: {passed}/{total}
-- Validated sub-skills status: {ok}/{total} via ia/state/skills.md
+- Validated sub-skills: {ok}/{total} (deep validation via skill:check)
 
 ## Result
 
@@ -143,7 +150,7 @@ Follow `/skill:format:out`:
 |-------|--------|
 | Base Validation | {score}/12 ({percent}%) |
 | Sub-skills Exist | {passed}/{total} |
-| Sub-skills Valid | {ok}/{total} (⚠️ {warnings}, ❌ {critical}) |
+| Sub-skills Valid | {ok}/{total} (deep validation) |
 
 ## Corrections
 - {fixes needed, or (none)}
@@ -185,7 +192,6 @@ For `--all`:
 | WE001 | Sub-skill not found: `{skill-name}` |
 | WE002 | Sub-skill has warnings: `{skill-name}` ({score}%) |
 | WE003 | Sub-skill is critical: `{skill-name}` ({score}%) |
-| WE004 | Sub-skill not validated: `{skill-name}` (run `skill:check --all`) |
 
 Inherits all error codes from `skill:check` (E001-E009, W001-W013).
 
@@ -205,7 +211,7 @@ Output:
 - Ran skill:check: 8/12
 - Detected sub-skills: git:pr:find, git:pr:create, git:pr:monitor
 - Validated sub-skills exist: 3/3
-- Validated sub-skills status: 0/3 ✅ (3 ⚠️) via ia/state/skills.md
+- Validated sub-skills: 0/3 ✅ (deep validation via skill:check)
 
 ## Result
 
@@ -213,7 +219,15 @@ Output:
 |-------|--------|
 | Base Validation | 8/12 (67%) |
 | Sub-skills Exist | 3/3 ✅ |
-| Sub-skills Valid | 0/3 (⚠️ 3, ❌ 0) |
+| Sub-skills Valid | 0/3 (deep validation) |
+
+### Sub-skills Validation Details
+
+| Sub-skill | Score | Status |
+|-----------|-------|--------|
+| git:pr:find | 8/12 (67%) | ⚠️ |
+| git:pr:create | 8/12 (67%) | ⚠️ |
+| git:pr:monitor | 8/12 (67%) | ⚠️ |
 
 ## Corrections
 - WE002: git:pr:find (67%) - has warnings
