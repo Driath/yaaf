@@ -240,5 +240,10 @@ Follow `/skill:format:out`:
 
 ## Notes
 - {any observations}
+- Consider adding E2E test documentation to reach 100% score
 ---
 ```
+
+## Notes
+
+**E2E Testing Encouraged:** Skills that document a tested execution example (input → output) score higher. Add an `## E2E Test` section showing a real invocation and expected result to reach 100% validation score.

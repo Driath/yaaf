@@ -14,7 +14,7 @@
 - [x] Validate Output section against format
 - [x] Add `--all` to validate all skills
 - [x] Generate/update `ia/state/skills.md`
-- [ ] Encourage E2E testing in notes
+- [x] Encourage E2E testing in notes
 
 ### workflow:check (NEW)
 - [ ] Create `workflow:check` skill
@@ -45,6 +45,7 @@
 - [x] When TODO.md all done → fallback to `ia/my-work.md` work items
 - [x] `/start` skill - analyze TODO.md + history.json to suggest best next task
 - [ ] Auto-suggest workflows based on context (e.g., pending tickets → workflow:feature)
+- [ ] Define when to auto-run `skill:check` / `workflow:check` (UX decision)
 
 ## workflow (global rules)
 
