@@ -56,6 +56,9 @@
 ## workflow (global rules)
 
 - [ ] `workflow:end` should save session history to `ia/state/sessions/` for later analysis
+- [ ] Explore skill callbacks pattern - where should the responsibility? (from PR #12)
+- [ ] Agent workflow responsibility for /skill/scripts/set-session (from PR #12)
+- [ ] Evaluate structured instruction format (JSON Schema, YAML) when patterns stabilize (from PR #12)
 - [ ] Session history format: `[{skill, calledBy, timestamp, response}]`
 - [ ] Calculate and display workflow duration (start → end timestamps)
 - [ ] Use `session/scripts/save.ts` to archive sessions

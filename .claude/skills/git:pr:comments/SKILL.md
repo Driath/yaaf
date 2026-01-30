@@ -1,12 +1,12 @@
 ---
 name: git:pr:comments
-description: Fetch PR comments, create a plan, get approval, then process
+description: Fetch PR comments, discuss openly with user, resolve together
 agent: Plan
 ---
 
 # git:pr:comments
 
-Fetch and analyze PR comments, propose a plan for handling them, get HITL approval, then execute via `git:pr:comments:process`.
+Fetch PR comments and have an open discussion with the user to resolve them.
 
 ## Usage
 
@@ -25,13 +25,12 @@ From parent (git:pr:monitor):
 ### 1. Fetch Comments
 
 ```bash
-gh pr view {pr.number} --json comments,reviews,reviewThreads
-```
+# Inline review comments
+gh api repos/{owner}/{repo}/pulls/{pr.number}/comments
 
-Extract:
-- Review comments (inline on code)
-- General comments
-- Review decisions (approve/request-changes)
+# General comments
+gh pr view {pr.number} --json comments,reviews
+```
 
 ### 2. Early Exit
 
@@ -40,120 +39,76 @@ If no unresolved comments:
 ---
 ✅ git:pr:comments completed
 
-## Actions
-- Fetched comments: 0 unresolved
-
 ## Result
 No comments to process.
 ---
 ```
-→ Exit, parent continues
 
-### 3. Analyze & Classify
+### 3. Present All Comments
 
-For each comment, determine:
-
-**Type:**
-- `auto` - Can be fixed automatically (rename, add check, fix typo)
-- `manual` - Needs human decision (architecture, approach question)
-
-**Subject:**
-- `code-style` - formatting, naming, conventions
-- `logic` - bug, edge case, error handling
-- `architecture` - design, pattern, structure
-- `docs` - comments, types, readme
-- `test` - coverage, missing cases
-- `security` - vulnerability, validation
-- `perf` - optimization
-
-**Importance:**
-- `blocking` - Must resolve to merge (request-changes)
-- `suggestion` - Nice to have
-- `question` - Needs response
-- `nitpick` - Ignorable
-
-**Auto criteria:**
-```
-IF (well understood from context)
-   AND (consistent with codebase)
-   AND (technically feasible)
-   AND (no architecture decision)
-   AND (isolated change, no side effects)
-→ type: auto
-ELSE
-→ type: manual
-```
-
-### 4. Write PLAN.md
-
-Create `/ia/state/{branch}/pr/PLAN.md`:
-
-```markdown
-# PR Comments Plan
-
-Branch: {branch}
-PR: #{number}
-Generated: {timestamp}
-
-## Summary
-- Total: {n} comments
-- Auto: {n} (can be fixed automatically)
-- Manual: {n} (need human input)
-
-## Comments
-
-| # | Type | Subject | Importance | Comment | Proposed Action |
-|---|------|---------|------------|---------|-----------------|
-| 1 | auto | code-style | suggestion | "Rename x to userId" | fix: rename variable |
-| 2 | manual | architecture | question | "Why this approach?" | reply: "{proposed response}" |
-| 3 | auto | logic | blocking | "Add null check" | fix: add null check |
-| 4 | manual | architecture | suggestion | "Consider Redux?" | reply: "Hors scope" |
-```
-
-### 5. HITL Approval
-
-Present plan and ask:
+Show ALL comments at once for discussion:
 
 ```
-## PR Comments Plan
+## PR #12 Comments
 
-| # | Type | Action |
-|---|------|--------|
-| 1 | auto | fix: rename variable |
-| 2 | manual | reply: "Pour isoler la logique métier" |
-| 3 | auto | fix: add null check |
-| 4 | manual | reply: "Hors scope pour cette PR" |
+| # | File:Line | Comment |
+|---|-----------|---------|
+| 1 | workflow.md:32 | "callbacks for skills - where should the responsibility?" |
+| 2 | workflow.md:1 | "scripts/set-session responsibility?" |
+| 3 | workflow.md:15 | "format d'instruction - pertinent? outils?" |
 
-Options:
-- "Approve all" (Recommended)
-- "Manage plan"
+---
+
+Let's discuss these. What do you think?
 ```
 
-**If "Approve all"** → Continue to step 6
+### 4. Open Discussion
 
-**If "Manage plan"** → User provides modifications:
+Have a **real conversation** with the user:
+
+- Listen to their thoughts
+- Ask clarifying questions if needed
+- Challenge ideas if relevant
+- Propose solutions
+- Build consensus
+
+**This is NOT a form to fill.** It's a discussion until we agree on what to do.
+
+Continue the conversation until the user indicates they're ready to finalize.
+
+### 5. HITL: Confirm Plan
+
+When discussion feels complete, summarize what was decided:
+
 ```
-> "2: skip, 4: reformule 'On peut en discuter en sync'"
+## Agreed Actions
+
+| # | Comment | Action |
+|---|---------|--------|
+| 1 | callbacks | → Add to TODO.md: "Explore skill callbacks pattern" |
+| 2 | scripts/set-session | → Reply: "Will implement in next iteration" |
+| 3 | format d'instruction | → Skip for now |
+
+Ready to process?
+- "Yes, go" → generate TODO.md and process
+- "Wait, let's discuss more" → continue discussion
 ```
-Update PLAN.md, re-show, re-HITL until approved.
 
 ### 6. Generate TODO.md
 
-Create `/ia/state/{branch}/pr/TODO.md` from approved plan:
+Create `/ia/state/{branch}/pr/TODO.md` with agreed actions:
 
 ```markdown
 # PR Comments TODO
 
 Branch: {branch}
 PR: #{number}
-Generated: {timestamp}
 
 ## Tasks
 
-- [ ] FIX #1: Rename `x` to `userId` in src/foo.ts:42
-- [ ] REPLY #2: "Pour isoler la logique métier"
-- [ ] FIX #3: Add null check in src/bar.ts:17
-- [ ] SKIP #4
+- [ ] TODO: Explore skill callbacks pattern (from PR comment #1)
+- [ ] REPLY #2: "Will implement in next iteration"
+- [ ] SKIP #3
 
 ## Done
 (none yet)
@@ -161,19 +116,17 @@ Generated: {timestamp}
 
 ### 7. Execute Process
 
-Execute `/git:pr:comments:process`
-
-This will read TODO.md and execute each task.
+Execute `/git:pr:comments:process` which:
+- Posts replies
+- Adds items to project TODO.md if requested
+- Marks conversations as resolved
 
 ### 8. Commit & Push
 
 If changes were made:
-
 ```bash
 git add -A
-git commit -m "fix: address PR comments
-
-- {summary of fixes}"
+git commit -m "fix: address PR comments"
 git push
 ```
 
@@ -184,31 +137,24 @@ git push
 ✅ git:pr:comments completed
 
 ## Actions
-- Fetched {n} comments
-- Plan: {auto} auto, {manual} manual
-- Processed: {fixes} fixes, {replies} replies, {skipped} skipped
-
-## Result
-PR comments addressed.
+- Discussed: {n} comments
+- Resolved: {n}
+- Added to TODO: {n}
+- Replied: {n}
+- Skipped: {n}
 
 ## Files
-- /ia/state/{branch}/pr/PLAN.md
 - /ia/state/{branch}/pr/TODO.md
-
-## Notes
-- {observations}
 ---
 ```
 
-## Error Handling
+## Key Principle
 
-- **No PR context** → Error: "Missing pr.number"
-- **gh CLI error** → Surface error
-- **Plan rejected multiple times** → HITL: "Abandon comment processing?"
+**This is a conversation, not a form.**
 
-## HITL Gates
+- Present all comments
+- Discuss openly
+- Reach agreement together
+- Then execute
 
-| Gate | Trigger | Options |
-|------|---------|---------|
-| Plan approval | After analysis | Approve all / Manage plan |
-| Abandon | Multiple rejections | Yes / No |
+The workflow cannot proceed until comments are resolved through discussion.
