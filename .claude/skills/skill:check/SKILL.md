@@ -71,6 +71,7 @@ wc -l < SKILL.md
 | Has Usage section | W002 | Contains `## Usage` |
 | Has Instructions section | W002 | Contains `## Instructions` |
 | References valid | E009 | All `[text](path)` links resolve |
+| Content in English | W014 | No French detected (comments, variables, docs) |
 
 ### 6. Validate Output Format (DRY)
 
@@ -189,6 +190,7 @@ State file updated: ia/state/skills.md
 | W011 | No Output section |
 | W012 | Doesn't reference skill:format:out |
 | W013 | Output missing required sections |
+| W014 | Content not in English (French detected) |
 
 ## Exemptions
 
