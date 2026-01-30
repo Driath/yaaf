@@ -4,10 +4,12 @@ Agent skills framework for Claude Code.
 
 ## Naming Conventions
 
-Skills follow naming conventions that trigger automatic behavior:
+Skills follow naming conventions that **require** loading base rules:
 
-- `workflow:*` → Loads `.claude/skills/workflow/SKILL.md` before execution
-- `skill:*` → Loads `.claude/skills/skill/SKILL.md` before execution
+- `workflow:*` → **MUST** load `.claude/skills/workflow/SKILL.md` BEFORE execution
+- `skill:*` → **MUST** load `.claude/skills/skill/SKILL.md` BEFORE execution
+
+**Not optional.** Read the base skill first, then execute the specific skill.
 
 ## Security Rules (always apply)
 
@@ -24,14 +26,4 @@ Actions requiring EXPLICIT confirmation (HITL via AskUserQuestion):
 ## Session Flow
 
 - **Start**: Run `/start` after `/clear` to get task suggestions
-- **End**: Run `/workflow:end` to update TODO.md and handoff
-
-## Workflow Handoff (mandatory)
-
-After completing ANY `workflow:*`:
-
-1. Update `TODO.md` (mark done, add new tasks discovered)
-2. Suggest next task from TODO.md
-3. Ask: "/clear to start fresh?"
-
-This keeps the improvement cycle continuous.
+- **End**: Workflows suggest handoff options automatically (see `workflow/SKILL.md`)

@@ -13,12 +13,17 @@ This skill is **not invoked directly**. By naming convention, any skill named `w
 
 ## Rules
 
-### 1. Retrospective After Completion
+### 1. Workflow Completion & Handoff
 
-After completing any `workflow:*`, execute `/workflow:retrospective` to:
-- Analyze what worked and what caused friction
-- Propose concrete improvements to skills used
-- Apply approved improvements directly to skill files
+After completing any `workflow:*`, present handoff options to the user:
+
+```
+Workflow terminé. Prochaines étapes:
+- /workflow:retrospective → Analyser et améliorer les skills
+- /clear puis /start → Nouveau contexte, prochaine tâche
+```
+
+**Note:** TODO.md updates are the responsibility of the skill that completed the work, not a separate end hook.
 
 ### 2. Sub-skill Execution via Task
 
@@ -107,26 +112,29 @@ Every workflow must display a statusline during execution. **Only count sub-skil
 {workflow-name} ({model})
 ```
 
-**Each sub-skill (as it completes):**
+**Each skill (as it completes):**
 ```
-[skill/total] {skill-name} ({agent}, {model}) → {result}
+[${step}/${total}] ${icon} ${skillName} | ${agent} | ${model} | → ${result}
 ```
 
-**Fields:**
-- `skill/total`: Current sub-skill number / total sub-skills in workflow
-- `skill-name`: Name of the sub-skill being executed
-- `agent`: Agent type from skill header (Explore, general-purpose) - omit if `workflow` (default)
-- `model`: Model used
-- `result`: Brief outcome of the sub-skill
+**Variables:**
+- `${step}`: Current skill number (1-indexed)
+- `${total}`: Total skills in workflow
+- `${icon}`: `✓` success | `⏭` skipped | `⏳` pending/blocked | `❌` error
+- `${skillName}`: Skill name (padded for alignment)
+- `${agent}`: Agent type from skill header
+- `${model}`: Model from skill header
+- `${result}`: Brief outcome, or `SKIPPED (reason)` if not executed
+
+**SKIPPED skills:** Keep in numbered sequence. Do not exclude from total count.
 
 **End of workflow (summary):**
 ```
 ---
-{workflow-name} ({model}) | {duration}
+${workflowName} (${model}) | ${duration}
 
-[1/3] {skill-name} ({agent}, {model}) → {result}
-[2/3] {skill-name} ({model}) → {result}
-[3/3] {skill-name} ({model}) → {result}
+[${step}/${total}] ${icon} ${skillName} | ${agent} | ${model} | → ${result}
+...
 ---
 ```
 
@@ -134,17 +142,15 @@ Every workflow must display a statusline during execution. **Only count sub-skil
 ```
 workflow:pr (opus)
 
-[1/3] git:pr:find (Explore, sonnet) → No PR found
-[2/3] git:pr:create (haiku) → PR #16 created
-[3/3] git:pr:monitor (haiku) → Blocked (review required)
+[1/3] ✓ git:pr:find    | workflow | haiku | → Found PR #18
+[2/3] ⏭ git:pr:create  | workflow | haiku | → SKIPPED (PR exists)
+[3/3] ⏳ git:pr:monitor | workflow | haiku | → Blocked (review required)
 
 ---
 workflow:pr (opus) | 1m
 
-[1/3] git:pr:find (Explore, sonnet) → No PR found
-[2/3] git:pr:create (haiku) → PR #16 created
-[3/3] git:pr:monitor (haiku) → Blocked (review required)
+[1/3] ✓ git:pr:find    | workflow | haiku | → Found PR #18
+[2/3] ⏭ git:pr:create  | workflow | haiku | → SKIPPED (PR exists)
+[3/3] ⏳ git:pr:monitor | workflow | haiku | → Blocked (review required)
 ---
 ```
-
-Note: When agent is `workflow` (default), omit it.

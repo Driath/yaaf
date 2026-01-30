@@ -13,7 +13,7 @@ Analyze a completed workflow execution to identify friction points and propose c
 /workflow:retrospective
 ```
 
-Called automatically at the end of every `workflow:*` execution.
+Called optionally after a workflow completes to analyze and improve skills.
 
 ## Context Required
 
@@ -130,10 +130,6 @@ Follow `/skill:format:out`:
 - **No friction points found** → Output positive summary, no proposals
 - **User rejects all proposals** → Log for pattern recognition, exit gracefully
 - **Cannot parse skill output** → Note in friction points, suggest standardizing output
-
-## Final Step
-
-After presenting improvements, invoke `/workflow:end` to handle handoff.
 
 ## Example Session
 

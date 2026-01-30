@@ -48,8 +48,19 @@ git branch --show-current
 git log origin/{base}..HEAD --oneline
 ```
 
-**Important:** This workflow does NOT commit changes. It works with existing commits only.
-- If uncommitted changes → Warn: "⚠️ Uncommitted changes detected (ignored)" and continue
+**Uncommitted changes:** If detected, HITL to propose commit:
+```
+⚠️ Uncommitted changes detected:
+  M .claude/skills/workflow/SKILL.md
+  M src/utils.ts
+
+Options:
+- "Commit and include in PR" → commit with auto-generated message, then continue
+- "Continue without committing" → ignore and proceed
+- "Exit" → let user handle manually
+```
+
+**Other checks:**
 - If no commits ahead of base → Error: "Nothing to push, commit first"
 - If on main/master with no feature branch → Error: "Create a feature branch first"
 
