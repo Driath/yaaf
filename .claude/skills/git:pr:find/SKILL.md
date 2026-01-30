@@ -1,8 +1,6 @@
 ---
 name: git:pr:find
 description: Find existing PR/MR for current branch. Provider-agnostic (GitHub, GitLab, Azure).
-model: sonnet
-agent: Explore
 ---
 
 # git:pr:find
