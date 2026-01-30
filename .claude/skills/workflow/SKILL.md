@@ -107,6 +107,10 @@ Auto-proceed for:
 
 Every workflow must display a statusline during execution. **Only count sub-skills**, not internal orchestrator steps.
 
+**Duration tracking:**
+1. At workflow start: `.claude/skills/workflow/scripts/timestamp` → store the value
+2. At workflow end: `.claude/skills/workflow/scripts/duration <start_timestamp>` → returns formatted duration
+
 **Start of workflow:**
 ```
 {workflow-name} ({model})
@@ -142,7 +146,7 @@ Every workflow must display a statusline during execution. **Only count sub-skil
 **End of workflow (summary):**
 ```
 ---
-${workflowName} (${model}) | ${duration}
+${workflowName} (${model}) | ${timestamp}
 
 [${step}/${total}] ${statusIcon} | ⚡ ${skillName} | 🤖 ${agent} | 🧠 ${model} | → ${result}
 ...
@@ -158,7 +162,7 @@ workflow:pr (opus)
 [3/3] ⏳ | ⚡ git:pr:monitor | 🤖 workflow | 🧠 haiku | → Blocked (review required)
 
 ---
-workflow:pr (opus) | 1m
+workflow:pr (opus) | 1m 23s
 
 [1/3] ✓ | ⚡ git:pr:find    | 🤖 workflow | 🧠 haiku | → Found PR #18
 [2/3] ⏭ | ⚡ git:pr:create  | 🤖 workflow | 🧠 haiku | → SKIPPED (PR exists)

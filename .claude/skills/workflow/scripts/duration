@@ -1,0 +1,19 @@
+#!/bin/bash
+# Usage: duration <start_timestamp>
+# Returns formatted duration since start
+
+start=$1
+now=$(date +%s)
+elapsed=$((now - start))
+
+if [ $elapsed -lt 60 ]; then
+    echo "${elapsed}s"
+elif [ $elapsed -lt 3600 ]; then
+    mins=$((elapsed / 60))
+    secs=$((elapsed % 60))
+    echo "${mins}m ${secs}s"
+else
+    hours=$((elapsed / 3600))
+    mins=$(((elapsed % 3600) / 60))
+    echo "${hours}h ${mins}m"
+fi
