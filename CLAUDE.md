@@ -4,10 +4,12 @@ Agent skills framework for Claude Code.
 
 ## Naming Conventions
 
-Skills follow naming conventions that trigger automatic behavior:
+Skills follow naming conventions that **require** loading base rules:
 
-- `workflow:*` → Loads `.claude/skills/workflow/SKILL.md` before execution
-- `skill:*` → Loads `.claude/skills/skill/SKILL.md` before execution
+- `workflow:*` → **MUST** load `.claude/skills/workflow/SKILL.md` BEFORE execution
+- `skill:*` → **MUST** load `.claude/skills/skill/SKILL.md` BEFORE execution
+
+**Not optional.** Read the base skill first, then execute the specific skill.
 
 ## Security Rules (always apply)
 
