@@ -45,7 +45,7 @@ Options:
 
 ### 4. Act on Choice
 
-- **Start this task** → Begin immediately
+- **Start this task** → Begin with acceptance criteria: "Remove this task from TODO.md when done"
 - **Show all pending** → List all unchecked tasks, re-prompt
 - **Something else** → Ask what they want
 
