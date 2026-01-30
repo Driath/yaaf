@@ -47,9 +47,50 @@ After completing any `workflow:*`, execute `/workflow:retrospective` to:
 - Propose concrete improvements to skills used
 - Apply approved improvements directly to skill files
 
-### 3. Nested Workflow Behavior
+### 3. Sub-skill Execution via Task
 
-When a workflow calls another workflow:
+**All sub-skills must be spawned via Task**, not executed inline. This ensures:
+- Each skill has its own isolated context
+- Cost control (skills default to haiku)
+- Visibility (statusline shows hierarchy)
+
+**Workflow agent responsibilities:**
+- Keeps global context (orchestration, decisions, HITL)
+- Spawns sub-skills via Task
+- Aggregates results
+
+**Sub-skill execution:**
+1. Read the skill's header to get `model` (default: haiku)
+2. Spawn Task with that model:
+```
+Task(subagent_type: "workflow", model: "{skill.model}", prompt: "Execute /git:pr:find for branch {branch}")
+```
+
+**Skill header example:**
+```yaml
+---
+name: git:pr:find
+description: Find existing PR for current branch
+model: haiku
+---
+```
+
+**Model selection:**
+- Defined in skill header (`model: haiku | sonnet | opus`)
+- Default: `haiku` if not specified
+- Complex reasoning skills can declare `model: sonnet` or `model: opus`
+
+**Example hierarchy:**
+```
+workflow:pr (opus) ← global context, orchestration
+  └─ Task: git:pr:find (haiku) ← isolated, executes and returns
+  └─ Task: git:pr:create (haiku) ← isolated, executes and returns
+  └─ Task: git:pr:monitor (haiku) ← isolated, executes and returns
+```
+
+### 4. Nested Workflow Behavior
+
+When a workflow calls another workflow (not a skill):
 
 ```
 IF same agent context (no Task spawn):
@@ -63,7 +104,7 @@ IF new agent context (Task spawn with custom model/agent):
 
 This prevents cascading retrospectives while ensuring each independent agent session learns from its execution.
 
-### 4. HITL Gates
+### 5. HITL Gates
 
 Workflows should pause for human input (HITL) at:
 - Merge decisions
@@ -76,7 +117,7 @@ Auto-proceed for:
 - Simple/clear self-review comments
 - Status polling
 
-### 5. Statusline & Duration Tracking
+### 6. Statusline & Duration Tracking
 
 Every workflow (and sub-agents) must display a statusline during execution:
 
