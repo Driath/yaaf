@@ -21,7 +21,7 @@
 - [x] Inherit from skill:check (workflow IS skill)
 - [x] Validate sub-skills exist
 - [x] Generate/update `ia/state/workflows.md`
-- [ ] V2: Validate sub-skills are themselves validated (read `ia/state/skills.md`)
+- [x] V2: Validate sub-skills are themselves validated (read `ia/state/skills.md`)
 - [ ] V2: Call `skill:check` on each sub-skill (deep validation)
 - [ ] V2: Validate orchestration flow (coherent steps)
 - [ ] V2: Encourage/require documented E2E test
