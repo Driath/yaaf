@@ -1,6 +1,7 @@
 ---
 name: code:implement
 description: Execute a plan file to implement changes in any project
+model: sonnet
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -21,18 +22,22 @@ Execute a plan file to implement changes. Works with any project that has a CLAU
 cd {path}  # default: current directory
 ```
 
-### 2. Find CLAUDE.md
+### 2. Find and Merge CLAUDE.md Files
 
-Search for CLAUDE.md from `path` up to git root:
+Collect ALL CLAUDE.md files from `path` up to git root:
 
 ```bash
-# Search up directory tree
-git rev-parse --show-toplevel  # get git root
-# Look for CLAUDE.md in path, then parent, up to git root
+# Get git root
+git rev-parse --show-toplevel
+
+# Collect all CLAUDE.md from path to root
+# Example: /root/CLAUDE.md, /root/packages/CLAUDE.md, /root/packages/app/CLAUDE.md
 ```
 
-If found → Read and apply conventions during implementation.
-If not found → Warn and proceed with generic conventions.
+**Merge order:** Root first, then progressively closer to `path`. Local conventions override global ones.
+
+If any found → Read all and merge conventions.
+If none found → Warn and proceed with generic conventions.
 
 ### 3. Read and Validate Plan
 
