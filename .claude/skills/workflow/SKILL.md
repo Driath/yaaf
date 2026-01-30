@@ -107,6 +107,11 @@ Auto-proceed for:
 
 Every workflow must display a statusline during execution. **Only count sub-skills**, not internal orchestrator steps.
 
+**Duration tracking:**
+1. At workflow start, capture timestamp: `date +%s` (Unix epoch seconds)
+2. At workflow end, calculate elapsed: `end - start`
+3. Format duration: `Xs` (<60s), `Xm Ys` (>=60s), `Xh Ym` (>=1h)
+
 **Start of workflow:**
 ```
 {workflow-name} ({model})
@@ -149,8 +154,6 @@ ${workflowName} (${model}) | ${timestamp}
 ---
 ```
 
-**Timestamp format:** ISO 8601 `YYYY-MM-DDTHH:MM:SS` (local time)
-
 **Example:**
 ```
 workflow:pr (opus)
@@ -160,7 +163,7 @@ workflow:pr (opus)
 [3/3] ⏳ | ⚡ git:pr:monitor | 🤖 workflow | 🧠 haiku | → Blocked (review required)
 
 ---
-workflow:pr (opus) | 2026-01-30T14:32:07
+workflow:pr (opus) | 1m 23s
 
 [1/3] ✓ | ⚡ git:pr:find    | 🤖 workflow | 🧠 haiku | → Found PR #18
 [2/3] ⏭ | ⚡ git:pr:create  | 🤖 workflow | 🧠 haiku | → SKIPPED (PR exists)
