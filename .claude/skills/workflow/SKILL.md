@@ -114,13 +114,24 @@ Every workflow must display a statusline during execution. **Only count sub-skil
 
 **Each skill (as it completes):**
 ```
-[${step}/${total}] ${icon} ${skillName} | ${agent} | ${model} | → ${result}
+[${step}/${total}] ${statusIcon} | ⚡ ${skillName} | 🤖 ${agent} | 🧠 ${model} | → ${result}
 ```
 
-**Variables:**
+**Status icons:**
+- `✓` = success
+- `⏭` = skipped
+- `⏳` = pending / blocked
+- `❌` = error
+
+**Label icons:**
+- `⚡` = skill (action)
+- `🤖` = agent (executor)
+- `🧠` = model (intelligence)
+
+**Fields:**
 - `${step}`: Current skill number (1-indexed)
 - `${total}`: Total skills in workflow
-- `${icon}`: `✓` success | `⏭` skipped | `⏳` pending/blocked | `❌` error
+- `${statusIcon}`: Status of execution
 - `${skillName}`: Skill name (padded for alignment)
 - `${agent}`: Agent type from skill header
 - `${model}`: Model from skill header
@@ -133,7 +144,7 @@ Every workflow must display a statusline during execution. **Only count sub-skil
 ---
 ${workflowName} (${model}) | ${duration}
 
-[${step}/${total}] ${icon} ${skillName} | ${agent} | ${model} | → ${result}
+[${step}/${total}] ${statusIcon} | ⚡ ${skillName} | 🤖 ${agent} | 🧠 ${model} | → ${result}
 ...
 ---
 ```
@@ -142,15 +153,15 @@ ${workflowName} (${model}) | ${duration}
 ```
 workflow:pr (opus)
 
-[1/3] ✓ git:pr:find    | workflow | haiku | → Found PR #18
-[2/3] ⏭ git:pr:create  | workflow | haiku | → SKIPPED (PR exists)
-[3/3] ⏳ git:pr:monitor | workflow | haiku | → Blocked (review required)
+[1/3] ✓ | ⚡ git:pr:find    | 🤖 workflow | 🧠 haiku | → Found PR #18
+[2/3] ⏭ | ⚡ git:pr:create  | 🤖 workflow | 🧠 haiku | → SKIPPED (PR exists)
+[3/3] ⏳ | ⚡ git:pr:monitor | 🤖 workflow | 🧠 haiku | → Blocked (review required)
 
 ---
 workflow:pr (opus) | 1m
 
-[1/3] ✓ git:pr:find    | workflow | haiku | → Found PR #18
-[2/3] ⏭ git:pr:create  | workflow | haiku | → SKIPPED (PR exists)
-[3/3] ⏳ git:pr:monitor | workflow | haiku | → Blocked (review required)
+[1/3] ✓ | ⚡ git:pr:find    | 🤖 workflow | 🧠 haiku | → Found PR #18
+[2/3] ⏭ | ⚡ git:pr:create  | 🤖 workflow | 🧠 haiku | → SKIPPED (PR exists)
+[3/3] ⏳ | ⚡ git:pr:monitor | 🤖 workflow | 🧠 haiku | → Blocked (review required)
 ---
 ```
