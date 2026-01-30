@@ -52,34 +52,68 @@ PR #{number}: {url}
 → Execute `/git:pr:comments` to plan and process comments
 → Repoll
 
-**IF conflicts:**
-→ HITL: "❌ Merge conflicts. Resolve manually then tell me."
+**Otherwise** → Go to step 4 (Blocked - HITL)
 
-**IF CI failed:**
-→ Show failure details, wait for fix
+### 4. Blocked - HITL (contextual options)
 
-**IF waiting (not mergeable yet):**
-→ Go to step 4 (HITL choice)
+Identify the blocking reason and present contextual options via AskUserQuestion.
 
-### 4. Wait Choice (HITL)
-
-Present options via AskUserQuestion:
+#### 4a. Conflicts
 
 ```
-⏳ PR #{number}: {url}
-
-| CI | {status} | Reviews | {status} | Conflicts | {status} |
+❌ PR #{number} has merge conflicts
 
 Options:
-- "Recheck maintenant" (Recommandé)
-- "Recheck dans 3 min"
-- "Sortir du workflow"
+- "J'ai résolu les conflits, recheck" → repoll (step 1)
+- "Sortir du workflow" → exit
 ```
 
-**Actions:**
-- "Recheck maintenant" → repoll immediately (go to step 1)
-- "Recheck dans 3 min" → wait 3 min, then repoll (go to step 1)
-- "Sortir du workflow" → exit with message: "workflow:pr en pause. Relance /workflow:pr pour reprendre."
+#### 4b. CI Failed
+
+```
+❌ PR #{number} CI failed
+
+{Show failure details from statusCheckRollup}
+
+Options:
+- "J'ai fix, recheck" → repoll (step 1)
+- "Voir les logs CI" → show CI URL
+- "Sortir du workflow" → exit
+```
+
+#### 4c. CI Pending
+
+```
+⏳ PR #{number} CI in progress
+
+Options:
+- "Recheck maintenant" → repoll (step 1)
+- "Recheck dans 3 min" (Recommended) → wait 3 min, repoll (step 1)
+- "Sortir du workflow" → exit
+```
+
+#### 4d. Review Required
+
+```
+⏳ PR #{number} awaiting review
+
+Options:
+- "J'ai approuvé sur GitHub, recheck" (Recommended) → repoll (step 1)
+- "Sortir du workflow" → exit
+```
+
+#### 4e. Changes Requested
+
+```
+❌ PR #{number} has changes requested
+
+Options:
+- "J'ai address les commentaires, recheck" → repoll (step 1)
+- "Voir les commentaires" → execute `/git:pr:comments`
+- "Sortir du workflow" → exit
+```
+
+**Exit message:** "workflow:pr en pause. Relance /workflow:pr pour reprendre."
 
 ### 5. Ready to Merge
 
@@ -146,6 +180,9 @@ PR #{number} merged successfully.
 
 | Gate | Trigger | Options |
 |------|---------|---------|
-| Wait choice | Not mergeable | Recheck now / 3 min / Exit |
+| Conflicts | Has conflicts | "Résolu, recheck" / Exit |
+| CI Failed | CI failed | "Fix, recheck" / "Voir logs" / Exit |
+| CI Pending | CI running | "Recheck now" / "3 min" / Exit |
+| Review Required | Awaiting review | "Approuvé, recheck" / Exit |
+| Changes Requested | Changes requested | "Addressé, recheck" / "Voir commentaires" / Exit |
 | Merge confirmation | Mergeable | Yes / No |
-| Conflict resolution | Conflicts | "Fixed" / "Cancel" |
