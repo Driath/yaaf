@@ -19,9 +19,15 @@ No arguments - infers context from session state.
 
 ### 1. Read Session State
 
-Read `ia/state/session/current.json`:
-- Extract workflow name, step, context
+Read `ia/state/sessions/{workflow}.json`:
+- Extract workflow name, step, context, `started_at`
 - If not exists → rely on conversation context or ask user
+
+**Calculate duration:**
+```
+started_at → now
+Format: Xh Ym (e.g., "1h 23m" or "45m" if under 1 hour)
+```
 
 ### 2. Archive Session (HITL)
 
@@ -29,7 +35,7 @@ Propose archiving the session:
 
 ```
 Session: {workflow} completed
-Duration: {started_at → now}
+Duration: {Xh Ym} (calculated from started_at)
 Context: {summary of context}
 
 Archiver cette session ?
@@ -60,7 +66,7 @@ Archiver cette session ?
 
 ### 3. Clear Session State
 
-Delete `ia/state/session/current.json`
+Delete `ia/state/sessions/{workflow}.json`
 
 ### 4. Update TODO.md
 
@@ -92,8 +98,12 @@ Follow `/skill:format:out`:
 ---
 ✅ workflow:end completed
 
+## Summary
+- Workflow: {workflow}
+- Duration: {Xh Ym}
+- Session: archived to {path} / cleared
+
 ## Actions
-- Session: {workflow} archived to {path} / cleared
 - Updated TODO.md: marked {X} done, added {Y} new
 - Next task: {task description or "none"}
 
@@ -104,6 +114,6 @@ Follow `/skill:format:out`:
 
 ## Error Handling
 
-- **No current.json** → Rely on conversation context or ask user
+- **No {workflow}.json** → Rely on conversation context or ask user
 - **No TODO.md** → Create one with discovered tasks
 - **No tasks to mark done** → Skip update, proceed to next task

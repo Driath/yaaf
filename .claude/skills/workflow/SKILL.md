@@ -15,15 +15,15 @@ This skill is **not invoked directly**. It is loaded automatically via `CLAUDE.m
 
 ### 1. Session State (Resumability)
 
-All workflows track their progress in `ia/state/session/current.json`.
+All workflows track their progress in `ia/state/sessions/{workflow}.json`.
 
 **On workflow start:**
-1. Check if `current.json` exists
+1. Check if `{workflow}.json` exists
 2. If exists and same workflow → HITL: "Reprendre {workflow} à l'étape {step} ?"
    - Yes → Load context, skip to that step
-   - No → Delete `current.json`, start fresh
+   - No → Delete `{workflow}.json`, start fresh
 3. If exists but different workflow → HITL: "Un workflow {other} est en cours. L'abandonner ?"
-4. Create/update `current.json`:
+4. Create/update `{workflow}.json`:
    ```json
    {
      "workflow": "workflow:pr",
@@ -38,7 +38,7 @@ All workflows track their progress in `ia/state/session/current.json`.
 - Update `context` with relevant data (pr_number, branch, etc.)
 
 **On workflow end:**
-- Handled by `/workflow:end` (archive option + delete `current.json`)
+- Handled by `/workflow:end` (archive option + delete `{workflow}.json`)
 
 ### 2. Retrospective After Completion
 
