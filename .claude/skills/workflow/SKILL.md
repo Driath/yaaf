@@ -112,26 +112,34 @@ Every workflow must display a statusline during execution. **Only count sub-skil
 {workflow-name} ({model})
 ```
 
-**Each sub-skill (as it completes):**
+**Each skill (as it completes):**
 ```
-[skill/total] {skill-name} ({agent}, {model}) → {result}
+[x/N] {icon} {skill-name} → {result}
 ```
 
+**Icons:**
+- `✓` = success
+- `⏭` = skipped
+- `⏳` = pending / blocked
+- `❌` = error
+
 **Fields:**
-- `skill/total`: Current sub-skill number / total sub-skills in workflow
-- `skill-name`: Name of the sub-skill being executed
-- `agent`: Agent type from skill header (Explore, general-purpose) - omit if `workflow` (default)
-- `model`: Model used
-- `result`: Brief outcome of the sub-skill
+- `x/N`: Current skill number / total skills in workflow
+- `skill-name`: Name of the skill
+- `result`: Brief outcome, or `SKIPPED (reason)` if not executed
+
+**Note:** Agent and model are defined in each skill's YAML header. No need to repeat in statusline.
+
+**SKIPPED skills:** Keep in numbered sequence. Do not exclude from total count.
 
 **End of workflow (summary):**
 ```
 ---
 {workflow-name} ({model}) | {duration}
 
-[1/3] {skill-name} ({agent}, {model}) → {result}
-[2/3] {skill-name} ({model}) → {result}
-[3/3] {skill-name} ({model}) → {result}
+[1/3] ✓ {skill-name} → {result}
+[2/3] ⏭ {skill-name} → SKIPPED (reason)
+[3/3] ✓ {skill-name} → {result}
 ---
 ```
 
@@ -139,17 +147,15 @@ Every workflow must display a statusline during execution. **Only count sub-skil
 ```
 workflow:pr (opus)
 
-[1/3] git:pr:find (Explore, sonnet) → No PR found
-[2/3] git:pr:create (haiku) → PR #16 created
-[3/3] git:pr:monitor (haiku) → Blocked (review required)
+[1/3] ✓ git:pr:find    → Found PR #18
+[2/3] ⏭ git:pr:create  → SKIPPED (PR exists)
+[3/3] ⏳ git:pr:monitor → Blocked (review required)
 
 ---
 workflow:pr (opus) | 1m
 
-[1/3] git:pr:find (Explore, sonnet) → No PR found
-[2/3] git:pr:create (haiku) → PR #16 created
-[3/3] git:pr:monitor (haiku) → Blocked (review required)
+[1/3] ✓ git:pr:find    → Found PR #18
+[2/3] ⏭ git:pr:create  → SKIPPED (PR exists)
+[3/3] ⏳ git:pr:monitor → Blocked (review required)
 ---
 ```
-
-Note: When agent is `workflow` (default), omit it.
