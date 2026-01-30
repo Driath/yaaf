@@ -2,6 +2,7 @@
 
 ## In Progress
 
+- [ ] PR #14: https://github.com/Driath/yaaf/pull/14 (chore: remove Background Monitoring rule)
 - [x] PR #3 merged: https://github.com/Driath/yaaf/pull/3
 - [x] PR #4 merged: Security rules
 - [x] PR #5 merged: workflow:pr reads context
