@@ -108,9 +108,8 @@ Auto-proceed for:
 Every workflow must display a statusline during execution. **Only count sub-skills**, not internal orchestrator steps.
 
 **Duration tracking:**
-1. At workflow start, capture timestamp: `date +%s` (Unix epoch seconds)
-2. At workflow end, calculate elapsed: `end - start`
-3. Format duration: `Xs` (<60s), `Xm Ys` (>=60s), `Xh Ym` (>=1h)
+1. At workflow start: `./scripts/timestamp` → store the value
+2. At workflow end: `./scripts/duration <start_timestamp>` → returns formatted duration
 
 **Start of workflow:**
 ```
