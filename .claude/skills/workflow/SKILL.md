@@ -108,8 +108,8 @@ Auto-proceed for:
 Every workflow must display a statusline during execution. **Only count sub-skills**, not internal orchestrator steps.
 
 **Duration tracking:**
-1. At workflow start: `./scripts/timestamp` → store the value
-2. At workflow end: `./scripts/duration <start_timestamp>` → returns formatted duration
+1. At workflow start: `.claude/skills/workflow/scripts/timestamp` → store the value
+2. At workflow end: `.claude/skills/workflow/scripts/duration <start_timestamp>` → returns formatted duration
 
 **Start of workflow:**
 ```
