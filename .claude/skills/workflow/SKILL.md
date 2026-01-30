@@ -76,14 +76,25 @@ Auto-proceed for:
 - Simple/clear self-review comments
 - Status polling
 
-### 5. Duration Tracking
+### 5. Progress & Duration Tracking
 
-Every workflow must track and display its duration:
+Every workflow must track and display progress and duration:
 
-1. **At workflow start**: Note the current time in conversation context
-2. **At workflow end**: Calculate elapsed time and include in output
+**Progress tracking:**
+1. Count total steps from the skill's instructions (### 1, ### 2, etc.)
+2. Display current step during execution: `[2/5] Creating PR...`
 
-**Output format:**
+**Duration tracking:**
+1. Note the current time at workflow start
+2. Calculate elapsed time at workflow end
+
+**Output format during execution:**
+```
+[1/5] Loading context...
+[2/5] Verifying prerequisites...
+```
+
+**Output format at completion:**
 ```
 Duration: Xh Ym (or Xm if under 1 hour)
 ```
