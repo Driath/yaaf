@@ -1,11 +1,11 @@
 ---
 name: start
-description: Read TODO.md and suggest the best next task or workflow
+description: Scan todos/plans/ and suggest the best next task with its implementation plan
 ---
 
 # start
 
-Entry point for new sessions. Reads TODO.md and suggests the most relevant next task.
+Entry point for new sessions. Scans `todos/plans/` and suggests the most relevant todo with its full implementation plan.
 
 ## Usage
 
@@ -17,36 +17,47 @@ No arguments.
 
 ## Instructions
 
-### 1. Read TODO.md
+### 1. Scan todos/plans/
 
-Read `TODO.md` and identify:
-- Unchecked tasks `- [ ]`
-- Group by section
+List all `.md` files in `todos/plans/` (excluding `.gitkeep`).
 
-### 2. Select Best Task
+For each file, extract frontmatter:
+- `name`: The todo slug
+- `status`: pending | in-progress | completed
+- `created`: Creation date
+
+Filter to `status: pending` only.
+
+### 2. Select Best Todo
 
 Priority:
-1. **First unchecked task** in "In Progress" section
-2. **First unchecked task** in any other section
+1. **First todo** with `status: in-progress`
+2. **Oldest pending todo** (by created date)
 3. **Fallback**: "All clear! What would you like to work on?"
 
 ### 3. Present Suggestion (HITL)
 
+Read the selected todo file to get its full content.
+
 Use AskUserQuestion:
 
 ```
-Suggested: {task description}
+Suggested: {todo name}
+
+{Brief summary from ## Context section}
 
 Options:
-- "Start this task" (Recommended)
-- "Show all pending tasks"
+- "Start this todo" (Recommended)
+- "Show all pending todos"
+- "Create new todo"
 - "Something else"
 ```
 
 ### 4. Act on Choice
 
-- **Start this task** → Begin with acceptance criteria: "Remove this task from TODO.md when done"
-- **Show all pending** → List all unchecked tasks, re-prompt
+- **Start this todo** → Display the full plan from the todo file, update status to `in-progress`
+- **Show all pending** → List all pending todos with names and dates, re-prompt
+- **Create new todo** → Ask for subject, then invoke `/todos:add`
 - **Something else** → Ask what they want
 
 ## Output
@@ -56,15 +67,19 @@ Options:
 ✅ start completed
 
 ## Actions
-- Loaded: TODO.md ({X} pending tasks)
-- Suggested: {task}
+- Scanned: todos/plans/ ({X} pending todos)
+- Selected: {todo name}
 
 ## Result
-Starting: {chosen task}
+Starting: {todo name}
+
+## Plan
+{Full plan content from todo file}
 ---
 ```
 
 ## Error Handling
 
-- **No TODO.md** → "No TODO.md found. What would you like to work on?"
-- **All tasks done** → "All clear! What's next?"
+- **No todos/plans/ directory** → "No todos found. Run `/todos:add \"subject\"` to create one."
+- **No pending todos** → "All clear! Run `/todos:add \"subject\"` to create a new todo."
+- **Malformed todo file** → Skip and note in output
