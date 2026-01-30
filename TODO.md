@@ -68,4 +68,4 @@
 
 ## Cleanup
 
-- [ ] Remove "Background Monitoring" rule from `workflow/SKILL.md` (not its responsibility)
+- [x] Remove "Background Monitoring" rule from `workflow/SKILL.md` (not its responsibility)
