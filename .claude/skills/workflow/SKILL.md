@@ -13,12 +13,17 @@ This skill is **not invoked directly**. By naming convention, any skill named `w
 
 ## Rules
 
-### 1. Retrospective After Completion
+### 1. Workflow Completion & Handoff
 
-After completing any `workflow:*`, execute `/workflow:retrospective` to:
-- Analyze what worked and what caused friction
-- Propose concrete improvements to skills used
-- Apply approved improvements directly to skill files
+After completing any `workflow:*`, present handoff options to the user:
+
+```
+Workflow terminé. Prochaines étapes:
+- /workflow:retrospective → Analyser et améliorer les skills
+- /clear puis /start → Nouveau contexte, prochaine tâche
+```
+
+**Note:** TODO.md updates are the responsibility of the skill that completed the work, not a separate end hook.
 
 ### 2. Sub-skill Execution via Task
 
