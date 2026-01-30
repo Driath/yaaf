@@ -23,6 +23,10 @@ Actions requiring EXPLICIT confirmation (HITL via AskUserQuestion):
 
 **Never assume approval.** Ask, wait, then act.
 
+## Code Quality
+
+- No unnecessary comments - code should be self-documenting
+
 ## Session Flow
 
 - **Start**: Run `/start` after `/clear` to get task suggestions
