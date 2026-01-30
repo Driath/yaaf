@@ -48,9 +48,8 @@ PR #{number}: {url}
 **IF mergeable:**
 → Go to step 5 (Ready to Merge)
 
-**IF new comments:**
-→ Execute `/code:review` to process comments
-→ Push fixes if any
+**IF comments (unresolved):**
+→ Execute `/git:pr:comments` to plan and process comments
 → Repoll
 
 **IF conflicts:**

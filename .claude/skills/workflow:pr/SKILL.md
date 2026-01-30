@@ -1,6 +1,7 @@
 ---
 name: workflow:pr
 description: Create a PR and check if it's mergeable (CI, approvals, conflicts). Orchestrates git:pr:* skills.
+agent: workflow
 ---
 
 # workflow:pr

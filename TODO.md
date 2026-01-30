@@ -21,7 +21,7 @@
 - [x] Inherit from skill:check (workflow IS skill)
 - [x] Validate sub-skills exist
 - [x] Generate/update `ia/state/workflows.md`
-- [ ] V2: Validate sub-skills are themselves validated (read `ia/state/skills.md`)
+- [x] V2: Validate sub-skills are themselves validated (read `ia/state/skills.md`)
 - [ ] V2: Call `skill:check` on each sub-skill (deep validation)
 - [ ] V2: Validate orchestration flow (coherent steps)
 - [ ] V2: Encourage/require documented E2E test
@@ -56,6 +56,9 @@
 ## workflow (global rules)
 
 - [ ] `workflow:end` should save session history to `ia/state/sessions/` for later analysis
+- [ ] Explore skill callbacks pattern - where should the responsibility? (from PR #12)
+- [ ] Agent workflow responsibility for /skill/scripts/set-session (from PR #12)
+- [ ] Evaluate structured instruction format (JSON Schema, YAML) when patterns stabilize (from PR #12)
 - [ ] Session history format: `[{skill, calledBy, timestamp, response}]`
 - [ ] Calculate and display workflow duration (start → end timestamps)
 - [ ] Use `session/scripts/save.ts` to archive sessions
