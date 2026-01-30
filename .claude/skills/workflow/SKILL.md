@@ -75,3 +75,17 @@ Auto-proceed for:
 - CI status checks
 - Simple/clear self-review comments
 - Status polling
+
+### 5. Duration Tracking
+
+Every workflow must track and display its duration:
+
+1. **At workflow start**: Note the current time in conversation context
+2. **At workflow end**: Calculate elapsed time and include in output
+
+**Output format:**
+```
+Duration: Xh Ym (or Xm if under 1 hour)
+```
+
+This is the agent's responsibility using conversation context - no external state file needed.
