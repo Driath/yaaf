@@ -33,10 +33,10 @@ After completing any `workflow:*`, execute `/workflow:retrospective` to:
 - Aggregates results
 
 **Sub-skill execution:**
-1. Read the skill's header to get `model` (default: haiku)
-2. Spawn Task with that model:
+1. Read the skill's header to get `model` and `agent`
+2. Spawn Task with those values:
 ```
-Task(subagent_type: "workflow", model: "{skill.model}", prompt: "Execute /git:pr:find for branch {branch}")
+Task(subagent_type: "{skill.agent}", model: "{skill.model}", prompt: "Execute /git:pr:find for branch {branch}")
 ```
 
 **Skill header example:**
@@ -45,13 +45,21 @@ Task(subagent_type: "workflow", model: "{skill.model}", prompt: "Execute /git:pr
 name: git:pr:find
 description: Find existing PR for current branch
 model: haiku
+agent: workflow
 ---
 ```
 
-**Model selection:**
-- Defined in skill header (`model: haiku | sonnet | opus`)
-- Default: `haiku` if not specified
-- Complex reasoning skills can declare `model: sonnet` or `model: opus`
+**Header fields:**
+
+| Field | Values | Default | Description |
+|-------|--------|---------|-------------|
+| `model` | haiku, sonnet, opus | haiku | Model for reasoning complexity |
+| `agent` | workflow, Explore, general-purpose | workflow | Agent type for tool access |
+
+**Agent selection guide:**
+- `workflow` - Skills that execute commands and interact with user (HITL)
+- `Explore` - Skills focused on codebase search and exploration
+- `general-purpose` - Complex multi-step tasks requiring broad tool access
 
 **Example hierarchy:**
 ```
@@ -92,35 +100,40 @@ Auto-proceed for:
 
 ### 5. Statusline & Duration Tracking
 
-Every workflow (and sub-agents) must display a statusline during execution:
+Every workflow must display a statusline during execution. **Only count sub-skills in progress**, not internal orchestrator steps.
 
-**Statusline format:**
+**Orchestrator format:**
 ```
-[step/total] | agent: {agent} | skill: {skill} | model: {model} | elapsed: {time}
+[skill/total] {workflow-name} ({model}) | {elapsed}
+```
+
+**Worker (sub-skill) format:**
+```
+  └─ {skill-name} ({agent}, {model}) → {result}
 ```
 
 **Fields:**
-- `step/total`: Current step and total steps (from skill's ### sections)
-- `agent`: Agent type (workflow, Explore, Plan, etc.)
-- `skill`: Current skill being executed (or `-` if none)
-- `model`: Model used - show `(default)` if not declared in skill header
+- `skill/total`: Current sub-skill number / total sub-skills in workflow
+- `workflow-name`: Name of the workflow being orchestrated
+- `skill-name`: Name of the sub-skill being executed
+- `agent`: Agent type from skill header (Explore, general-purpose) - omit if `workflow` (default)
+- `model`: Model used - omit if `haiku` (default)
 - `elapsed`: Time since workflow start
+- `result`: Brief outcome of the sub-skill
 
 **Example during execution:**
 ```
-[1/6] | agent: workflow | skill: - | model: opus | elapsed: 0m
-[3/6] | agent: workflow | skill: git:pr:find | model: haiku (default) | elapsed: 1m
+[1/3] workflow:pr (opus) | 0m
+  └─ git:pr:find (Explore, sonnet) → No PR found
+[2/3] workflow:pr (opus) | 1m
+  └─ git:pr:create (haiku) → PR #16 created
+[3/3] workflow:pr (opus) | 2m
+  └─ git:pr:monitor (haiku) → Ready to merge
 ```
 
-**Sub-agents spawned via Task must also display their statusline:**
-```
-[3/6] | agent: workflow | skill: git:pr:find | model: opus | elapsed: 1m
-  └─ [1/2] | agent: workflow | skill: git:pr:find | model: haiku (default) | elapsed: 0m
-```
+Note: When agent is `workflow` (default), omit it. Always show model for transparency.
 
 **At workflow completion, include total duration:**
 ```
-Duration: Xh Ym (or Xm if under 1 hour)
+Duration: Xm
 ```
-
-This is the agent's responsibility using conversation context - no external state file needed.
