@@ -103,7 +103,7 @@ This ensures:
 
 ## Session State
 
-Workflows track their progress in `ia/state/session/current.json` for resumability.
+Workflows track their progress in `ia/state/sessions/{workflow}.json` for resumability.
 
 ### Format
 
@@ -121,15 +121,15 @@ Workflows track their progress in `ia/state/session/current.json` for resumabili
 
 ### Rules
 
-1. **Workflow start** → Create/overwrite `current.json`
+1. **Workflow start** → Create/overwrite `{workflow}.json`
 2. **Sub-skill start** → Update `step` field
 3. **Context changes** → Update `context` (PR number, iteration, etc.)
-4. **Workflow end** → Archive to `ia/state/sessions/{name}.md` (optional), delete `current.json`
+4. **Workflow end** → Archive to `ia/state/sessions/{name}.md` (optional), delete `{workflow}.json`
 
 ### Resumability
 
 On `/start` or `/workflow:*`:
-1. Read `ia/state/session/current.json`
+1. Read `ia/state/sessions/{workflow}.json`
 2. If exists → Propose: "Reprendre {workflow} à l'étape {step} ?"
 3. If yes → Skip to that step with stored context
 4. If no → Clear and start fresh
