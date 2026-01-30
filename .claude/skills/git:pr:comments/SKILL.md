@@ -43,12 +43,26 @@ git push
 **If REPLY only:**
 Skip to step 3.
 
-### 3. Post Reply
+### 3. Post Reply & Resolve
 
 ```bash
 # Reply to inline comment
 gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id}/replies \
   -f body="{reply message from plan}"
+
+# Resolve the conversation (GraphQL)
+gh api graphql -f query='
+  mutation {
+    resolveReviewThread(input: {threadId: "{thread_id}"}) {
+      thread { isResolved }
+    }
+  }
+'
+```
+
+**Note:** To get thread_id, use:
+```bash
+gh api repos/{owner}/{repo}/pulls/{pr}/comments/{comment_id} --jq '.node_id'
 ```
 
 ### 4. Cleanup
@@ -68,6 +82,7 @@ rm {plan}
 - Action: {FIX|REPLY}
 - File: {file}:{line} (if FIX)
 - Reply: Posted
+- Resolved: Yes
 - Plan: Deleted
 
 ## Commit
