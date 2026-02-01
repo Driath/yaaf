@@ -6,7 +6,8 @@ import { useStore, type AgentStatus } from './store'
 const STATUS: Record<AgentStatus, { icon: string; color: string }> = {
   queued: { icon: figures.circle, color: 'yellow' },
   working: { icon: figures.play, color: 'blue' },
-  waiting: { icon: '?', color: 'magenta' }
+  waiting: { icon: '?', color: 'magenta' },
+  idle: { icon: figures.tick, color: 'green' }
 }
 
 export function Dashboard() {

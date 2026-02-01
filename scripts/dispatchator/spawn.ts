@@ -26,11 +26,25 @@ export function getRunningAgents(): string[] {
   return result.stdout.toString().trim().split('\n').filter(w => w && w !== 'bash')
 }
 
-export async function spawnAgent(ticketId: string, summary: string): Promise<string | null> {
+export type AgentMode = 'default' | 'plan'
+
+export interface SpawnOptions {
+  model?: 'haiku' | 'sonnet' | 'opus'
+  thinking?: boolean
+  agentMode?: AgentMode
+}
+
+export async function spawnAgent(ticketId: string, summary: string, options: SpawnOptions = {}): Promise<string | null> {
   const claudePath = '/Users/matthieuczeski/.nvm/versions/node/v22.16.0/bin/claude'
   const cwd = process.cwd()
+  const model = options.model || 'haiku'
+  const thinking = options.thinking || false
+  const agentMode = options.agentMode || 'default'
   const prompt = `Coucou ! Je suis l'agent pour le ticket ${ticketId}`
-  const cmd = `cd ${cwd} && ${claudePath} "${prompt}"`
+  // MAX_THINKING_TOKENS=0 disables thinking, omit to enable
+  const thinkingEnv = thinking ? '' : 'MAX_THINKING_TOKENS=0 '
+  const modeFlag = agentMode !== 'default' ? `--permission-mode ${agentMode} ` : ''
+  const cmd = `cd ${cwd} && ${thinkingEnv}exec ${claudePath} --model ${model} ${modeFlag}"${prompt}"`
 
   // Check if agents session is running
   if (!hasAgentsSession()) {
@@ -82,6 +96,7 @@ export function killAgent(ticketId: string): boolean {
   const result = spawnSync('tmux', ['kill-window', '-t', `${AGENTS_SESSION}:${ticketId}`])
   return result.status === 0
 }
+
 
 
 // Get the currently focused agent window

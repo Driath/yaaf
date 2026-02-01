@@ -10,12 +10,32 @@
         ]
       }
     ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-stop.sh"
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-user-input.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-session-end.sh"
           }
         ]
       }

@@ -3,7 +3,7 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import { spawnAgent, focusAgent as focusAgentPane, getRunningAgents, getActiveAgent, killAgent as killAgentPane } from './spawn'
-import { readdirSync, watch } from 'fs'
+import { readdirSync, watch, unlinkSync } from 'fs'
 
 const AGENTS_STATE_DIR = `${process.cwd()}/ia/state/agents`
 
@@ -16,12 +16,33 @@ function getWaitingAgents(): Set<string> {
   }
 }
 
-export type AgentStatus = 'queued' | 'working' | 'waiting'
+function getDoneAgents(): Set<string> {
+  try {
+    const files = readdirSync(AGENTS_STATE_DIR)
+    return new Set(files.filter(f => f.endsWith('.done')).map(f => f.replace('.done', '')))
+  } catch {
+    return new Set()
+  }
+}
+
+function clearDoneFile(agentId: string): void {
+  try {
+    unlinkSync(`${AGENTS_STATE_DIR}/${agentId}.done`)
+  } catch { /* ignore */ }
+}
+
+export type AgentStatus = 'queued' | 'working' | 'waiting' | 'idle'
+
+export type Model = 'haiku' | 'sonnet' | 'opus'
+export type AgentMode = 'default' | 'plan'
 
 export interface Agent {
   id: string          // ticket ID (e.g. KAN-8)
   summary: string     // ticket summary
   status: AgentStatus
+  model: Model
+  thinking: boolean
+  agentMode: AgentMode
 }
 
 export type Action = 'kill' | 'done'
@@ -43,7 +64,7 @@ export interface Store {
   actionIndex: number
 
   // Actions
-  addAgent: (id: string, summary: string) => void
+  addAgent: (id: string, summary: string, model?: Model, thinking?: boolean, agentMode?: AgentMode) => void
   updateAgent: (id: string, status: AgentStatus) => void
   focusAgent: (id: string) => void
   log: (message: string) => void
@@ -51,6 +72,7 @@ export interface Store {
   selectPrev: () => void
   focusSelected: () => void
   syncAgentsState: () => void
+  removeAgent: (id: string) => void
   toggleActions: () => void
   nextAction: () => void
   prevAction: () => void
@@ -66,7 +88,7 @@ const existingAgents = new Set(getRunningAgents())
 export const useStore = create<Store>()(
   subscribeWithSelector((set, get) => ({
     // Config
-    maxAgents: 2,
+    maxAgents: 1,
 
     // State
     agents: [],
@@ -77,7 +99,7 @@ export const useStore = create<Store>()(
     actionIndex: 0,
 
     // Actions
-    addAgent: (id, summary) => {
+    addAgent: (id, summary, model = 'haiku', thinking = false, agentMode = 'default') => {
       if (get().agents.some(a => a.id === id)) return
 
       // Check if this agent already exists in tmux
@@ -86,9 +108,11 @@ export const useStore = create<Store>()(
       const status: AgentStatus = alreadyRunning
         ? (waiting.has(id) ? 'waiting' : 'working')
         : 'queued'
-      const logMsg = alreadyRunning ? `🔄 ${id}: reconnected` : `🎫 ${id}: queued`
+      const thinkingLabel = thinking ? ' 🧠' : ''
+      const modeLabel = agentMode === 'plan' ? ' 📋' : ''
+      const logMsg = alreadyRunning ? `🔄 ${id}: reconnected` : `🎫 ${id}: queued (${model}${thinkingLabel}${modeLabel})`
 
-      const agent: Agent = { id, summary, status }
+      const agent: Agent = { id, summary, status, model, thinking, agentMode }
       set((s) => ({
         agents: [...s.agents, agent],
         logs: [...s.logs, logMsg].slice(-MAX_LOGS)
@@ -153,6 +177,22 @@ export const useStore = create<Store>()(
       }))
     },
 
+    removeAgent: (id) => {
+      const agent = get().agents.find(a => a.id === id)
+      if (!agent) return
+
+      // Kill tmux window if running
+      if (agent.status === 'working' || agent.status === 'waiting') {
+        killAgentPane(id)
+      }
+
+      set((s) => ({
+        agents: s.agents.filter(a => a.id !== id),
+        logs: [...s.logs, `✅ ${id}: auto-done`].slice(-MAX_LOGS),
+        selectedIndex: Math.min(s.selectedIndex, Math.max(0, s.agents.length - 2))
+      }))
+    },
+
     toggleActions: () => {
       set((s) => ({ showActions: !s.showActions, actionIndex: 0 }))
     },
@@ -199,33 +239,38 @@ export const useStore = create<Store>()(
 
 // Selectors
 const getQueued = (s: Store) => s.agents.filter(a => a.status === 'queued')
-const getActive = (s: Store) => s.agents.filter(a => a.status === 'working' || a.status === 'waiting')
+const getWorking = (s: Store) => s.agents.filter(a => a.status === 'working')
 
 // Subscribe: when queue changes, try to spawn
 useStore.subscribe(
-  (s) => ({ queued: getQueued(s).length, active: getActive(s).length }),
-  ({ queued, active }, prev) => {
+  (s) => ({ queued: getQueued(s).length, working: getWorking(s).length }),
+  ({ queued, working }, prev) => {
     const { maxAgents, updateAgent, log } = useStore.getState()
-    const canSpawn = active < maxAgents
+    const canWork = working < maxAgents
     const hasQueued = queued > 0
 
-    // New agent queued, or a slot freed up
-    if (canSpawn && hasQueued) {
+    if (canWork && hasQueued) {
       const next = getQueued(useStore.getState())[0]
       if (next) {
         updateAgent(next.id, 'working')
-        log(`🚀 ${next.id}: spawning agent`)
-        spawnAgent(next.id, next.summary)
+        const thinkingLabel = next.thinking ? ' 🧠' : ''
+        const modeLabel = next.agentMode === 'plan' ? ' 📋' : ''
+        log(`🚀 ${next.id}: spawning agent (${next.model}${thinkingLabel}${modeLabel})`)
+        spawnAgent(next.id, next.summary, { model: next.model, thinking: next.thinking, agentMode: next.agentMode })
       }
     }
   },
-  { equalityFn: (a, b) => a.queued === b.queued && a.active === b.active }
+  { equalityFn: (a, b) => a.queued === b.queued && a.working === b.working }
 )
 
-// Watch for .waiting file changes
+// Watch for state file changes
 const watcher = watch(AGENTS_STATE_DIR, (event, filename) => {
   if (filename?.endsWith('.waiting')) {
     useStore.getState().syncAgentsState()
+  } else if (filename?.endsWith('.done')) {
+    const agentId = filename.replace('.done', '')
+    clearDoneFile(agentId)
+    useStore.getState().removeAgent(agentId)
   }
 })
 

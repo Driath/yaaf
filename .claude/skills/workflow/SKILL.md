@@ -15,8 +15,17 @@ This skill is **not invoked directly**. By naming convention, any skill named `w
 
 ### 1. Workflow Completion & Handoff
 
-After completing any `workflow:*`, present handoff options to the user:
+After completing any `workflow:*`:
 
+**If running as dispatched agent (in tmux via orchestrator):**
+```bash
+# Signal completion to orchestrator
+TICKET_ID=$(tmux display-message -p '#{window_name}')
+touch "ia/state/agents/${TICKET_ID}.done"
+```
+The orchestrator will detect the `.done` file and terminate the session.
+
+**If running interactively:**
 ```
 Workflow terminé. Prochaines étapes:
 - /workflow:retrospective → Analyser et améliorer les skills
