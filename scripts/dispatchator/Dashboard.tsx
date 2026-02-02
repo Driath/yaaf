@@ -10,6 +10,12 @@ const STATUS: Record<AgentStatus, { icon: string; color: string }> = {
   idle: { icon: figures.tick, color: 'green' }
 }
 
+const MODEL_ICON: Record<string, string> = {
+  small: '★   ',
+  medium: '★★  ',
+  strong: '★★★ '
+}
+
 export function Dashboard() {
   const { stdout } = useStdout()
   const width = stdout?.columns || 80
@@ -58,13 +64,8 @@ export function Dashboard() {
 
   return (
     <Box flexDirection="column" width={width} height={height}>
-      {/* Header */}
-      <Box>
-        <Box width={4}><Text bold> </Text></Box>
-        <Box width={4}><Text bold> </Text></Box>
-        <Box><Text bold>RESUME</Text></Box>
-      </Box>
-      <Text>{'─'.repeat(width - 2)}</Text>
+      {/* Separator */}
+      <Text dimColor>{'─'.repeat(width - 2)}</Text>
 
       {/* Rows */}
       {agents.length === 0 ? (
@@ -87,8 +88,17 @@ export function Dashboard() {
               <Box width={3}>
                 <Text color={STATUS[agent.status].color}>{STATUS[agent.status].icon}</Text>
               </Box>
-              <Box flexGrow={1}>
-                <Text inverse={isSelected}>{agent.summary}</Text>
+              <Box width={5}>
+                <Text dimColor>{MODEL_ICON[agent.model]}</Text>
+              </Box>
+              <Box width={2}>
+                <Text>{agent.thinking ? '🧠' : ' '}</Text>
+              </Box>
+              <Box width={2}>
+                <Text>{agent.agentMode === 'plan' ? '📋' : ' '}</Text>
+              </Box>
+              <Box flexGrow={1} marginLeft={1}>
+                <Text>{agent.title || agent.id}</Text>
               </Box>
               {isSelected && showActions && (
                 <Box marginLeft={1}>

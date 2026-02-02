@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
-import { spawnAgent, focusAgent as focusAgentPane, getRunningAgents, getActiveAgent, killAgent as killAgentPane } from './spawn'
+import { spawnAgent, focusAgent as focusAgentPane, getRunningAgents, getActiveAgent, killAgent as killAgentPane, getWindowTitles } from './spawn'
 import { readdirSync, watch, unlinkSync } from 'fs'
 
 const AGENTS_STATE_DIR = `${process.cwd()}/ia/state/agents`
@@ -33,12 +33,13 @@ function clearDoneFile(agentId: string): void {
 
 export type AgentStatus = 'queued' | 'working' | 'waiting' | 'idle'
 
-export type Model = 'haiku' | 'sonnet' | 'opus'
+export type Model = 'small' | 'medium' | 'strong'
 export type AgentMode = 'default' | 'plan'
 
 export interface Agent {
   id: string          // ticket ID (e.g. KAN-8)
   summary: string     // ticket summary
+  title: string       // tmux window title (set by agent)
   status: AgentStatus
   model: Model
   thinking: boolean
@@ -99,7 +100,7 @@ export const useStore = create<Store>()(
     actionIndex: 0,
 
     // Actions
-    addAgent: (id, summary, model = 'haiku', thinking = false, agentMode = 'default') => {
+    addAgent: (id, summary, model = 'small', thinking = false, agentMode = 'default') => {
       if (get().agents.some(a => a.id === id)) return
 
       // Check if this agent already exists in tmux
@@ -112,7 +113,7 @@ export const useStore = create<Store>()(
       const modeLabel = agentMode === 'plan' ? ' 📋' : ''
       const logMsg = alreadyRunning ? `🔄 ${id}: reconnected` : `🎫 ${id}: queued (${model}${thinkingLabel}${modeLabel})`
 
-      const agent: Agent = { id, summary, status, model, thinking, agentMode }
+      const agent: Agent = { id, summary, title: '', status, model, thinking, agentMode }
       set((s) => ({
         agents: [...s.agents, agent],
         logs: [...s.logs, logMsg].slice(-MAX_LOGS)
@@ -163,6 +164,7 @@ export const useStore = create<Store>()(
       const activeId = getActiveAgent()
       const waiting = getWaitingAgents()
       const running = new Set(getRunningAgents())
+      const titles = getWindowTitles()
 
       set((s) => ({
         activeAgentId: activeId,
@@ -172,7 +174,9 @@ export const useStore = create<Store>()(
           if (!running.has(a.id)) return { ...a, status: 'queued' as AgentStatus }
           // Update working/waiting based on HITL state
           const newStatus: AgentStatus = waiting.has(a.id) ? 'waiting' : 'working'
-          return a.status !== newStatus ? { ...a, status: newStatus } : a
+          // Update title from tmux
+          const newTitle = titles.get(a.id) || a.title
+          return { ...a, status: newStatus, title: newTitle }
         })
       }))
     },

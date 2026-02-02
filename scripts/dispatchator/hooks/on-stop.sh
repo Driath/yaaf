@@ -1,9 +1,22 @@
 #!/bin/bash
+# on-stop.sh - Mark agent as waiting for human input (HITL)
+#
+# BEHAVIOR:
+# - Creates {agent_id}.waiting file when agent stops (permission request, etc.)
+# - The .waiting file remains until the Jira ticket moves to Done column
+# - This is intentional: any HITL can be re-challenged, so the agent stays
+#   in "waiting" state until the work item is fully closed
+#
+# CLEANUP:
+# - .waiting is removed by usePolling.ts when ticket status = Done
+# - NOT removed when user responds to the agent (that would be wrong)
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 STATE_DIR="$SCRIPT_DIR/../../../ia/state/agents"
+
+# Get agent ID from tmux window name
 agent_id=$(tmux display-message -p '#{window_name}' 2>/dev/null)
-echo "[on-stop] agent_id=$agent_id STATE_DIR=$STATE_DIR" >> /tmp/hooks-debug.log
-if [ -n "$agent_id" ] && [ "$agent_id" != "bash" ]; then
+
+if [ -n "$agent_id" ] && [ "$agent_id" != "bash" ] && [ "$agent_id" != "zsh" ]; then
   touch "$STATE_DIR/${agent_id}.waiting"
-  echo "[on-stop] created $STATE_DIR/${agent_id}.waiting" >> /tmp/hooks-debug.log
 fi

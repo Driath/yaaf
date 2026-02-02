@@ -5,11 +5,11 @@ import { useStore, type Model, type AgentMode } from './store'
 // Parse model from Jira labels (IA:MODEL:*)
 function parseModelFromLabels(labels: string[]): Model {
   for (const label of labels) {
-    if (label === 'IA:MODEL:STRONG') return 'opus'
-    if (label === 'IA:MODEL:MEDIUM') return 'sonnet'
-    if (label === 'IA:MODEL:SMALL') return 'haiku'
+    if (label === 'IA:MODEL:STRONG') return 'strong'
+    if (label === 'IA:MODEL:MEDIUM') return 'medium'
+    if (label === 'IA:MODEL:SMALL') return 'small'
   }
-  return 'haiku' // default
+  return 'small' // default
 }
 
 // Check if thinking is enabled (IA:CAP:THINK label)
@@ -21,6 +21,16 @@ function hasThinking(labels: string[]): boolean {
 function parseAgentMode(labels: string[]): AgentMode {
   if (labels.includes('IA:AGENT:PLAN')) return 'plan'
   return 'default'
+}
+
+// Parse workflow from labels (IA:WORKFLOW:*)
+function parseWorkflow(labels: string[]): string {
+  for (const label of labels) {
+    if (label.startsWith('IA:WORKFLOW:')) {
+      return label.replace('IA:WORKFLOW:', '').toLowerCase().replace(/_/g, '-')
+    }
+  }
+  return 'intent' // default: router
 }
 
 const POLL_INTERVAL = 10_000 // 10s
@@ -41,13 +51,20 @@ const jira = new Version3Client({
 
 export function usePolling() {
   const addAgent = useStore((s) => s.addAgent)
-  const updateAgent = useStore((s) => s.updateAgent)
-  const agents = useStore((s) => s.agents)
 
+  // Sync local state periodically (tmux windows, .waiting files)
+  // Uses getState() to avoid re-render loops
+  useEffect(() => {
+    const syncInterval = setInterval(() => {
+      useStore.getState().syncAgentsState()
+    }, 2000)
+    return () => clearInterval(syncInterval)
+  }, [])
+
+  // Poll Jira for new tickets
   useEffect(() => {
     const poll = async () => {
       try {
-        // Fetch ready tickets
         const jql = `project = ${PROJECT_KEY} AND status = "${STATUS_COLUMN}" ORDER BY rank ASC`
         const result = await jira.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
           jql,
@@ -55,19 +72,19 @@ export function usePolling() {
           maxResults: 50
         })
 
-        const issues = result.issues || []
-
-        for (const issue of issues) {
+        for (const issue of result.issues || []) {
           const fields = issue.fields as { summary?: string; labels?: string[] }
           const summary = fields.summary || 'No summary'
           const labels = fields.labels || []
           const model = parseModelFromLabels(labels)
           const thinking = hasThinking(labels)
           const agentMode = parseAgentMode(labels)
-          addAgent(issue.key, summary, model, thinking, agentMode)
+          const workflow = parseWorkflow(labels)
+          addAgent(issue.key, summary, model, thinking, agentMode, workflow)
         }
 
-        // Check for done tickets (only for active agents)
+        // Check for done tickets
+        const { agents, updateAgent } = useStore.getState()
         const activeIds = agents.filter(a => a.status !== 'queued').map(a => a.id)
         if (activeIds.length > 0) {
           const doneJql = `key in (${activeIds.join(',')}) AND status = "${DONE_COLUMN}"`
@@ -76,19 +93,17 @@ export function usePolling() {
             fields: ['key'],
             maxResults: 50
           })
-
           for (const issue of doneResult.issues || []) {
             updateAgent(issue.key, 'idle')
           }
         }
       } catch (err) {
-        // Silent fail for now
+        // Silent fail
       }
     }
 
     poll()
     const interval = setInterval(poll, POLL_INTERVAL)
-
     return () => clearInterval(interval)
-  }, [addAgent, updateAgent, agents])
+  }, [addAgent])
 }

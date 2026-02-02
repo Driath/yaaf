@@ -13,6 +13,21 @@ This skill is **not invoked directly**. By naming convention, any skill named `w
 
 ## Rules
 
+### 0. Window Title (dispatched agents)
+
+When running as a dispatched agent in tmux, set a descriptive window title at workflow start:
+
+```bash
+printf '\033]2;Brief description of current task\007'
+```
+
+Keep it short (< 30 chars). Examples:
+- `Analyzing PR #42`
+- `Implementing sidebar`
+- `Fixing auth bug`
+
+This helps the orchestrator display meaningful info.
+
 ### 1. Workflow Completion & Handoff
 
 After completing any `workflow:*`:

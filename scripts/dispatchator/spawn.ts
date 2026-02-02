@@ -28,8 +28,17 @@ export function getRunningAgents(): string[] {
 
 export type AgentMode = 'default' | 'plan'
 
+export type Model = 'small' | 'medium' | 'strong'
+
+// Map functional model names to provider-specific names
+const MODEL_MAP: Record<Model, string> = {
+  small: 'haiku',
+  medium: 'sonnet',
+  strong: 'opus'
+}
+
 export interface SpawnOptions {
-  model?: 'haiku' | 'sonnet' | 'opus'
+  model?: Model
   thinking?: boolean
   agentMode?: AgentMode
 }
@@ -37,18 +46,19 @@ export interface SpawnOptions {
 export async function spawnAgent(ticketId: string, summary: string, options: SpawnOptions = {}): Promise<string | null> {
   const claudePath = '/Users/matthieuczeski/.nvm/versions/node/v22.16.0/bin/claude'
   const cwd = process.cwd()
-  const model = options.model || 'haiku'
+  const model = MODEL_MAP[options.model || 'small']
   const thinking = options.thinking || false
   const agentMode = options.agentMode || 'default'
   const prompt = `Coucou ! Je suis l'agent pour le ticket ${ticketId}`
   // MAX_THINKING_TOKENS=0 disables thinking, omit to enable
-  const thinkingEnv = thinking ? '' : 'MAX_THINKING_TOKENS=0 '
+  const thinkingFlag = thinking ? '--settings \'{"alwaysThinkingEnabled":true}\' ' : ''
   const modeFlag = agentMode !== 'default' ? `--permission-mode ${agentMode} ` : ''
-  const cmd = `cd ${cwd} && ${thinkingEnv}exec ${claudePath} --model ${model} ${modeFlag}"${prompt}"`
+  const cmd = `cd ${cwd} && exec ${claudePath} --model ${model} ${thinkingFlag}${modeFlag}"${prompt}"`
+  console.log(`[spawn] ${ticketId}: thinking=${thinking}, cmd=${cmd}`)
 
-  // Check if agents session is running
+  // Wait for agents session (user needs to run bun start:agents)
   if (!hasAgentsSession()) {
-    return Promise.reject(new Error('yaaf-agents session not running. Run: bun start:agents'))
+    return Promise.resolve(null) // Will retry on next sync
   }
 
   // Skip if agent window already exists
@@ -107,4 +117,20 @@ export function getFocusedAgent(): string | null {
   if (result.status !== 0) return null
   const name = result.stdout.toString().trim()
   return name && name !== 'bash' ? name : null
+}
+
+// Get window titles for all agents
+export function getWindowTitles(): Map<string, string> {
+  const result = spawnSync('tmux', [
+    'list-windows', '-t', AGENTS_SESSION, '-F', '#{window_name}:#{pane_title}'
+  ])
+  if (result.status !== 0) return new Map()
+  const titles = new Map<string, string>()
+  for (const line of result.stdout.toString().trim().split('\n')) {
+    const [name, title] = line.split(':')
+    if (name && title && name !== 'zsh' && name !== 'bash') {
+      titles.set(name, title)
+    }
+  }
+  return titles
 }
