@@ -41,6 +41,7 @@ export interface SpawnOptions {
   model?: Model
   thinking?: boolean
   agentMode?: AgentMode
+  workflow?: string
 }
 
 export async function spawnAgent(ticketId: string, summary: string, options: SpawnOptions = {}): Promise<string | null> {
@@ -49,12 +50,12 @@ export async function spawnAgent(ticketId: string, summary: string, options: Spa
   const model = MODEL_MAP[options.model || 'small']
   const thinking = options.thinking || false
   const agentMode = options.agentMode || 'default'
-  const prompt = `Coucou ! Je suis l'agent pour le ticket ${ticketId}`
-  // MAX_THINKING_TOKENS=0 disables thinking, omit to enable
+  const workflow = options.workflow || 'intent'
+  const prompt = `/workflow:${workflow} ${ticketId}`
   const thinkingFlag = thinking ? '--settings \'{"alwaysThinkingEnabled":true}\' ' : ''
   const modeFlag = agentMode !== 'default' ? `--permission-mode ${agentMode} ` : ''
   const cmd = `cd ${cwd} && exec ${claudePath} --model ${model} ${thinkingFlag}${modeFlag}"${prompt}"`
-  console.log(`[spawn] ${ticketId}: thinking=${thinking}, cmd=${cmd}`)
+  console.log(`[spawn] ${ticketId}: workflow=${workflow}, thinking=${thinking}, cmd=${cmd}`)
 
   // Wait for agents session (user needs to run bun start:agents)
   if (!hasAgentsSession()) {

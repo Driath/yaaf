@@ -28,28 +28,7 @@ Keep it short (< 30 chars). Examples:
 
 This helps the orchestrator display meaningful info.
 
-### 1. Workflow Completion & Handoff
-
-After completing any `workflow:*`:
-
-**If running as dispatched agent (in tmux via orchestrator):**
-```bash
-# Signal completion to orchestrator
-TICKET_ID=$(tmux display-message -p '#{window_name}')
-touch "ia/state/agents/${TICKET_ID}.done"
-```
-The orchestrator will detect the `.done` file and terminate the session.
-
-**If running interactively:**
-```
-Workflow terminé. Prochaines étapes:
-- /workflow:retrospective → Analyser et améliorer les skills
-- /clear puis /start → Nouveau contexte, prochaine tâche
-```
-
-**Note:** TODO.md updates are the responsibility of the skill that completed the work, not a separate end hook.
-
-### 2. Sub-skill Execution via Task
+### 1. Sub-skill Execution via Task
 
 **All sub-skills must be spawned via Task**, not executed inline. This ensures:
 - Each skill has its own isolated context
@@ -98,7 +77,7 @@ workflow:pr (opus) ← global context, orchestration
   └─ Task: git:pr:monitor (haiku) ← isolated, executes and returns
 ```
 
-### 3. Nested Workflow Behavior
+### 2. Nested Workflow Behavior
 
 When a workflow calls another workflow (not a skill):
 
@@ -113,6 +92,23 @@ IF new agent context (Task spawn with custom model/agent):
 ```
 
 This prevents cascading retrospectives while ensuring each independent agent session learns from its execution.
+
+### 3. Project Context Loading
+
+Workflows that receive a `projectName` input MUST load project-specific overrides if they exist:
+
+```
+.claude/skills/{workflowName}/references/projects/{projectName}.md
+```
+
+This file contains project-specific requirements (test strategy, conventions, etc.) that override or extend the workflow's default behavior.
+
+**Example:**
+```
+workflow:work-item-to-code-plan receives projectName="degradation"
+→ Loads .claude/skills/workflow:work-item-to-code-plan/references/projects/degradation.md
+→ Plan must include E2E scenarios as specified
+```
 
 ### 4. HITL Gates
 

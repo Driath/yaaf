@@ -44,6 +44,7 @@ export interface Agent {
   model: Model
   thinking: boolean
   agentMode: AgentMode
+  workflow: string    // workflow to execute (e.g. 'intent', 'work-item-to-code-plan')
 }
 
 export type Action = 'kill' | 'done'
@@ -65,7 +66,7 @@ export interface Store {
   actionIndex: number
 
   // Actions
-  addAgent: (id: string, summary: string, model?: Model, thinking?: boolean, agentMode?: AgentMode) => void
+  addAgent: (id: string, summary: string, model?: Model, thinking?: boolean, agentMode?: AgentMode, workflow?: string) => void
   updateAgent: (id: string, status: AgentStatus) => void
   focusAgent: (id: string) => void
   log: (message: string) => void
@@ -100,7 +101,7 @@ export const useStore = create<Store>()(
     actionIndex: 0,
 
     // Actions
-    addAgent: (id, summary, model = 'small', thinking = false, agentMode = 'default') => {
+    addAgent: (id, summary, model = 'small', thinking = false, agentMode = 'default', workflow = 'intent') => {
       if (get().agents.some(a => a.id === id)) return
 
       // Check if this agent already exists in tmux
@@ -113,7 +114,7 @@ export const useStore = create<Store>()(
       const modeLabel = agentMode === 'plan' ? ' 📋' : ''
       const logMsg = alreadyRunning ? `🔄 ${id}: reconnected` : `🎫 ${id}: queued (${model}${thinkingLabel}${modeLabel})`
 
-      const agent: Agent = { id, summary, title: '', status, model, thinking, agentMode }
+      const agent: Agent = { id, summary, title: '', status, model, thinking, agentMode, workflow }
       set((s) => ({
         agents: [...s.agents, agent],
         logs: [...s.logs, logMsg].slice(-MAX_LOGS)
@@ -259,8 +260,8 @@ useStore.subscribe(
         updateAgent(next.id, 'working')
         const thinkingLabel = next.thinking ? ' 🧠' : ''
         const modeLabel = next.agentMode === 'plan' ? ' 📋' : ''
-        log(`🚀 ${next.id}: spawning agent (${next.model}${thinkingLabel}${modeLabel})`)
-        spawnAgent(next.id, next.summary, { model: next.model, thinking: next.thinking, agentMode: next.agentMode })
+        log(`🚀 ${next.id}: spawning /workflow:${next.workflow} (${next.model}${thinkingLabel}${modeLabel})`)
+        spawnAgent(next.id, next.summary, { model: next.model, thinking: next.thinking, agentMode: next.agentMode, workflow: next.workflow })
       }
     }
   },
@@ -275,6 +276,12 @@ const watcher = watch(AGENTS_STATE_DIR, (event, filename) => {
     const agentId = filename.replace('.done', '')
     clearDoneFile(agentId)
     useStore.getState().removeAgent(agentId)
+  } else if (filename?.endsWith('.kill-agent')) {
+    const agentId = filename.replace('.kill-agent', '')
+    try { unlinkSync(`${AGENTS_STATE_DIR}/${filename}`) } catch { /* ignore */ }
+    killAgentPane(agentId)
+    useStore.getState().removeAgent(agentId)
+    useStore.getState().log(`💀 ${agentId}: killed, will re-spawn`)
   }
 })
 
