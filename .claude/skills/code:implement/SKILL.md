@@ -1,115 +1,87 @@
 ---
 name: code:implement
-description: Implement a work item according to its technical plan
+description: Execute a plan file to implement changes in any project
+model: sonnet
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
 # code:implement
 
-Implement a work item by following its technical implementation plan.
+Execute a plan file to implement changes. Works with any project that has a CLAUDE.md file.
 
 ## Arguments
-- project (e.g., "DGD")  
-- key (e.g., "KAN-4")
+
+- `plan` (required): Path to plan file (e.g., `todos/plans/my-feature.md`)
+- `path` (optional, default: `.`): Working directory
 
 ## Instructions
 
-### 1. Verify Prerequisites
+### 1. Resolve Working Directory
 
 ```bash
-# Check worktree exists
-test -d worktrees/{project}-{key}
-
-# Get implementation plan
-bun plans/get.ts project={project} key={key}
+cd {path}  # default: current directory
 ```
 
-If missing:
-- No worktree → Suggest `/git:worktree:add {project} {key}`
-- No plan → Suggest `/code:plan {project} {key}`
+### 2. Find and Merge CLAUDE.md Files
 
-### 2. Navigate to Worktree
-
-**IMPORTANT:** All work happens in the worktree directory.
+Collect ALL CLAUDE.md files from `path` up to git root:
 
 ```bash
-cd worktrees/{project}-{key}
+# Get git root
+git rev-parse --show-toplevel
+
+# Collect all CLAUDE.md from path to root
+# Example: /root/CLAUDE.md, /root/packages/CLAUDE.md, /root/packages/app/CLAUDE.md
 ```
 
-All subsequent commands (Read, Write, Edit, Bash) are relative to this directory.
+**Merge order:** Root first, then progressively closer to `path`. Local conventions override global ones.
 
-### 3. Follow Implementation Plan
+If any found → Read all and merge conventions.
+If none found → Warn and proceed with generic conventions.
 
-The plan contains step-by-step instructions. Execute them in order:
+### 3. Read and Validate Plan
 
-**Example from plan:**
-- Phase 1: Install dependencies (npx commands, npm install)
-- Phase 2: Create files (components, pages)
-- Phase 3: Modify existing files (layout, config)
+Read the plan file. Validate structure:
 
-Follow the plan exactly:
-- Use exact file paths from plan
-- Copy code snippets as-is
-- Run installation commands
+- Has frontmatter with `name`
+- Has `## Plan` section with steps
+
+If invalid → Error with specific issue.
+
+### 4. Execute Plan Steps
+
+Execute each step in the `## Plan` section in order:
+
+- Follow the plan exactly
+- Use paths relative to `path` argument
+- Apply CLAUDE.md conventions
 - Verify each step before moving to next
 
-### 4. Commit Changes
+### 5. Commit Changes
 
 Once implementation is complete:
 
 ```bash
-git add .
+git add -A
 git status
-git commit -m "{key}: {short-summary}
+git commit -m "{plan-name}: {short-summary}
 
 {brief-description}"
 ```
 
 **Commit message format:**
-- First line: `{KEY}: {summary}` (e.g., "KAN-4: Add shadcn sidebar")
+- First line: `{plan-name}: {summary}` (from frontmatter name)
 - Body: Brief description of what was done
-- **No co-author line**
+- Follow CLAUDE.md commit conventions if specified
 
-### 5. HITL: Review
+## Output
 
-Present to user:
-```
-✅ Implementation complete
-
-📝 Files created/modified:
-- {list}
-
-💬 Commit:
-{commit message}
-
-📂 Worktree: worktrees/{project}-{key}/
-🌿 Branch: feature/{key}
-
-Next: /git:create-pr {project} {key}
-```
-
-User can:
-- Approve → Ready for PR
-- Request changes → Iterate
-- Test manually: `cd worktrees/{project}-{key} && npm run dev`
-
-## Success Criteria
-
-- All files from plan created/modified
-- Code compiles (no errors)
-- Changes committed
-- User approved
+Follow `/skill:format:out`
 
 ## Error Handling
 
-- Compilation errors → Fix and retry
-- Missing dependencies → Install
-- Plan unclear → Ask user
-
-## Notes
-
-- Work entirely in worktree
-- Follow plan exactly
-- Don't add extra features
-- Use project conventions
-- Commit clean, working code
+- **Plan file not found** → Error with path
+- **Invalid plan structure** → Error with what's missing
+- **No CLAUDE.md** → Warn, continue with generic conventions
+- **Compilation errors** → Fix and retry
+- **Plan unclear** → Ask user

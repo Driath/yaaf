@@ -55,10 +55,18 @@ Options:
 
 ### 4. Act on Choice
 
-- **Start this todo** → Display the full plan from the todo file, update status to `in-progress`
+- **Start this todo** → Display the full plan, execute it, then delete the plan file
 - **Show all pending** → List all pending todos with names and dates, re-prompt
 - **Create new todo** → Ask for subject, then invoke `/todos:add`
 - **Something else** → Ask what they want
+
+### 5. Execute and Cleanup
+
+When user chooses "Start this todo":
+
+1. Display the full plan from the todo file
+2. Execute each step in the plan
+3. After successful completion, **delete the plan file** (`rm todos/plans/{name}.md`)
 
 ## Output
 

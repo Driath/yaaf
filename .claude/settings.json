@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(touch ia/state/agents/*)"
+      "Bash(touch ia/state/agents/*)",
+      "Bash(.claude/skills/**/scripts/*)"
     ]
   },
   "hooks": {
