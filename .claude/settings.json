@@ -1,7 +1,40 @@
 {
   "permissions": {
     "allow": [
+      "Bash(touch ia/state/agents/*)",
       "Bash(.claude/skills/**/scripts/*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-stop.sh"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-stop.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-session-end.sh"
+          }
+        ]
+      }
     ]
   }
 }

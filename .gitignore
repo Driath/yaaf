@@ -18,3 +18,10 @@ node_modules/
 /scripts/
 !.claude/skills/**/scripts/
 !todos/plans/
+
+# Ralph
+.ralph/
+.ralphrc
+
+# Agent state (runtime)
+ia/state/agents/*.kill-agent
