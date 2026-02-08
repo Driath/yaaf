@@ -11,8 +11,7 @@
 # - .waiting is removed by usePolling.ts when ticket status = Done
 # - NOT removed when user responds to the agent (that would be wrong)
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-STATE_DIR="$SCRIPT_DIR/../../../ia/state/agents"
+STATE_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}/ia/state/agents"
 
 # Get agent ID from tmux window name
 agent_id=$(tmux display-message -p '#{window_name}' 2>/dev/null)
