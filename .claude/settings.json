@@ -11,7 +11,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-stop.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/dispatchator/hooks/on-stop.sh"
           }
         ]
       }
@@ -21,7 +21,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-stop.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/dispatchator/hooks/on-stop.sh"
           }
         ]
       }
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/scripts/dispatchator/hooks/on-session-end.sh"
+            "command": "\"$CLAUDE_PROJECT_DIR\"/dispatchator/hooks/on-session-end.sh"
           }
         ]
       }

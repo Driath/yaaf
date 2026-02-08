@@ -3,8 +3,8 @@
   "version": "2.0.0",
   "description": "Yet Another Agent Framework - Agent skills for Claude Code",
   "scripts": {
-    "start:orchestrator": "bun scripts/dispatchator/index.tsx",
-    "dev:orchestrator": "bun --watch scripts/dispatchator/index.tsx",
+    "start:orchestrator": "bun dispatchator/index.tsx",
+    "dev:orchestrator": "bun --watch dispatchator/index.tsx",
     "start:agents": "tmux kill-session -t yaaf-agents 2>/dev/null; tmux new-session -s yaaf-agents",
     "cleanup": "./scripts/cleanup.sh"
   },
