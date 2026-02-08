@@ -19,6 +19,9 @@ node_modules/
 !.claude/skills/**/scripts/
 !todos/plans/
 
+# Dispatchator user config
+dispatchator.config.ts
+
 # Ralph
 .ralph/
 .ralphrc
