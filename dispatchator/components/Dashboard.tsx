@@ -1,19 +1,8 @@
 import figures from "figures";
 import { Box, Text, useInput, useStdout } from "ink";
-import { type AgentStatus, useStore } from "./store";
-
-const STATUS: Record<AgentStatus, { icon: string; color: string }> = {
-	queued: { icon: figures.circle, color: "yellow" },
-	working: { icon: figures.play, color: "blue" },
-	waiting: { icon: "?", color: "magenta" },
-	idle: { icon: figures.tick, color: "green" },
-};
-
-const MODEL_ICON: Record<string, string> = {
-	small: "★   ",
-	medium: "★★  ",
-	strong: "★★★ ",
-};
+import { useStore } from "../store";
+import { AgentRow } from "./AgentRow";
+import { LogPanel } from "./LogPanel";
 
 export function Dashboard() {
 	const { stdout } = useStdout();
@@ -40,13 +29,10 @@ export function Dashboard() {
 	const waiting = agents.filter((a) => a.status === "waiting").length;
 	const queued = agents.filter((a) => a.status === "queued").length;
 
-	// Calculate available lines for logs
-	// height - header(2) - agents - footer(2) - separator(1)
 	const agentLines = Math.max(agents.length, 1);
 	const logsAvailable = Math.max(0, height - 2 - agentLines - 2 - 1);
 	const visibleLogs = logs.slice(-logsAvailable);
 
-	// Handle arrow keys and enter
 	useInput((_input, key) => {
 		if (showActions) {
 			if (key.leftArrow) prevAction();
@@ -63,64 +49,24 @@ export function Dashboard() {
 
 	return (
 		<Box flexDirection="column" width={width} height={height}>
-			{/* Separator */}
 			<Text dimColor>{"─".repeat(width - 2)}</Text>
 
-			{/* Rows */}
 			{agents.length === 0 ? (
 				<Text dimColor>(no agents)</Text>
 			) : (
-				agents.map((agent, index) => {
-					const isSelected = index === selectedIndex;
-					const isActive = agent.id === activeAgentId;
-					const pointer = isSelected ? figures.pointer : " ";
-					const activeIcon = isActive ? figures.radioOn : figures.radioOff;
-
-					return (
-						<Box key={agent.id}>
-							<Box width={3}>
-								<Text color="cyan">{pointer}</Text>
-							</Box>
-							<Box width={3}>
-								<Text color={isActive ? "green" : "gray"}>{activeIcon}</Text>
-							</Box>
-							<Box width={3}>
-								<Text color={STATUS[agent.status].color}>
-									{STATUS[agent.status].icon}
-								</Text>
-							</Box>
-							<Box width={5}>
-								<Text dimColor>{MODEL_ICON[agent.model]}</Text>
-							</Box>
-							<Box width={2}>
-								<Text>{agent.thinking ? "🧠" : " "}</Text>
-							</Box>
-							<Box width={2}>
-								<Text>{agent.agentMode === "plan" ? "📋" : " "}</Text>
-							</Box>
-							<Box flexGrow={1} marginLeft={1}>
-								<Text>{agent.title || agent.id}</Text>
-							</Box>
-							{isSelected && showActions && (
-								<Box marginLeft={1}>
-									{actions.map((action, i) => (
-										<Text
-											key={action.id}
-											color={i === actionIndex ? "cyan" : "gray"}
-											inverse={i === actionIndex}
-										>
-											{" "}
-											{action.icon}{" "}
-										</Text>
-									))}
-								</Box>
-							)}
-						</Box>
-					);
-				})
+				agents.map((agent, index) => (
+					<AgentRow
+						key={agent.id}
+						agent={agent}
+						isSelected={index === selectedIndex}
+						isActive={agent.id === activeAgentId}
+						showActions={showActions}
+						actionIndex={actionIndex}
+						actions={actions}
+					/>
+				))
 			)}
 
-			{/* Footer stats */}
 			<Box marginTop={1}>
 				<Text dimColor>
 					{working + waiting}/{maxAgents} active | {waiting} waiting | {queued}{" "}
@@ -129,16 +75,7 @@ export function Dashboard() {
 				</Text>
 			</Box>
 
-			{/* Logs */}
-			{visibleLogs.length > 0 && (
-				<Box flexDirection="column" flexGrow={1} marginTop={1}>
-					{visibleLogs.map((log, i) => (
-						<Text key={i} dimColor>
-							&gt; {log}
-						</Text>
-					))}
-				</Box>
-			)}
+			<LogPanel logs={visibleLogs} />
 		</Box>
 	);
 }

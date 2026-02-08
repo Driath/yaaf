@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useStore } from "./store";
+import { useStore } from "../store";
 
 const SYNC_INTERVAL = 2_000; // 2s
 

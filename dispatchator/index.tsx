@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 import { render, useApp, useInput } from "ink";
-import { Dashboard } from "./Dashboard";
-import { usePolling } from "./usePolling";
-import { useWatch } from "./useWatch";
+import { Dashboard } from "./components/Dashboard";
+import { usePolling } from "./hooks/usePolling";
+import { useWatch } from "./hooks/useWatch";
 
 // Validate env
 if (!process.env.JIRA_EMAIL || !process.env.JIRA_TOKEN) {

@@ -1,35 +1,16 @@
 import { useEffect } from "react";
-import { buildDoneJql, createJiraClient, getConfig } from "./config";
-import { type AgentMode, type Model, useStore } from "./store";
+import { getConfig } from "../config";
+import { useStore } from "../store";
+import {
+	buildDoneJql,
+	createJiraClient,
+	hasThinking,
+	parseAgentMode,
+	parseModelFromLabels,
+	parseWorkflow,
+} from "../work-item";
 
-function parseModelFromLabels(labels: string[]): Model {
-	for (const label of labels) {
-		if (label === "IA:MODEL:STRONG") return "strong";
-		if (label === "IA:MODEL:MEDIUM") return "medium";
-		if (label === "IA:MODEL:SMALL") return "small";
-	}
-	return getConfig().agents.defaultModel;
-}
-
-function hasThinking(labels: string[]): boolean {
-	return labels.includes("IA:CAP:THINK");
-}
-
-function parseAgentMode(labels: string[]): AgentMode {
-	if (labels.includes("IA:AGENT:PLAN")) return "plan";
-	return "default";
-}
-
-function parseWorkflow(labels: string[]): string {
-	for (const label of labels) {
-		if (label.startsWith("IA:WORKFLOW:")) {
-			return label.replace("IA:WORKFLOW:", "").toLowerCase().replace(/_/g, "-");
-		}
-	}
-	return getConfig().agents.defaultWorkflow;
-}
-
-const jira = createJiraClient();
+const client = createJiraClient();
 
 export function usePolling() {
 	const addAgent = useStore((s) => s.addAgent);
@@ -45,12 +26,12 @@ export function usePolling() {
 	useEffect(() => {
 		const poll = async () => {
 			try {
-				for (const jql of config.jira.queries) {
+				for (const jql of config.workItem.queries) {
 					const result =
-						await jira.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
+						await client.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
 							jql,
-							fields: config.jira.fields,
-							maxResults: config.jira.maxResults,
+							fields: config.workItem.fields,
+							maxResults: config.workItem.maxResults,
 						});
 
 					for (const issue of result.issues || []) {
@@ -73,12 +54,12 @@ export function usePolling() {
 					.filter((a) => a.status !== "queued")
 					.map((a) => a.id);
 				if (activeIds.length > 0) {
-					const doneJql = buildDoneJql(config.jira.doneColumn, activeIds);
+					const doneJql = buildDoneJql(config.workItem.doneColumn, activeIds);
 					const doneResult =
-						await jira.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
+						await client.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
 							jql: doneJql,
 							fields: ["key"],
-							maxResults: config.jira.maxResults,
+							maxResults: config.workItem.maxResults,
 						});
 					for (const issue of doneResult.issues || []) {
 						updateAgent(issue.key, "idle");
@@ -94,10 +75,10 @@ export function usePolling() {
 		return () => clearInterval(interval);
 	}, [
 		addAgent,
-		config.jira.doneColumn,
-		config.jira.fields,
-		config.jira.maxResults,
-		config.jira.queries,
+		config.workItem.doneColumn,
+		config.workItem.fields,
+		config.workItem.maxResults,
+		config.workItem.queries,
 		config.polling.jiraInterval,
 	]);
 }

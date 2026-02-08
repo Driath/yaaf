@@ -2,9 +2,19 @@
 // The orchestrator runs in a separate Warp window without tmux
 
 import { spawn, spawnSync } from "node:child_process";
-import { getConfig, resolveClaudePath } from "./config";
+import { getConfig } from "../config";
+import type { Model, SpawnOptions } from "./types";
 
 const AGENTS_SESSION = "yaaf-agents";
+
+function resolveClaudePath(path: "auto" | string): string {
+	if (path !== "auto") return path;
+	const result = spawnSync("which", ["claude"]);
+	if (result.status === 0) return result.stdout.toString().trim();
+	throw new Error(
+		"Could not find claude CLI. Set agents.claudePath in dispatchator.config.ts",
+	);
+}
 
 // Check if agents session exists
 function hasAgentsSession(): boolean {
@@ -45,23 +55,11 @@ export function getRunningAgents(): string[] {
 		.filter((w) => w && w !== "bash");
 }
 
-export type AgentMode = "default" | "plan";
-
-export type Model = "small" | "medium" | "strong";
-
-// Map functional model names to provider-specific names
 const MODEL_MAP: Record<Model, string> = {
 	small: "haiku",
 	medium: "sonnet",
 	strong: "opus",
 };
-
-export interface SpawnOptions {
-	model?: Model;
-	thinking?: boolean;
-	agentMode?: AgentMode;
-	workflow?: string;
-}
 
 export async function spawnAgent(
 	ticketId: string,

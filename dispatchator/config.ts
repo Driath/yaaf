@@ -1,10 +1,8 @@
-import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { Version3Client } from "jira.js";
 
 export interface DispatchatorConfig {
-	jira: {
+	workItem: {
 		queries: string[];
 		doneColumn: string;
 		maxResults: number;
@@ -49,7 +47,7 @@ export function getConfig(): DispatchatorConfig {
 
 function buildFallbackConfig(): DispatchatorConfig {
 	return {
-		jira: {
+		workItem: {
 			queries: ['project = KAN AND status = "Agent-Ready" ORDER BY rank ASC'],
 			doneColumn: "Done",
 			maxResults: 50,
@@ -66,29 +64,4 @@ function buildFallbackConfig(): DispatchatorConfig {
 			claudePath: "auto",
 		},
 	};
-}
-
-export function buildDoneJql(doneColumn: string, activeIds: string[]): string {
-	return `key in (${activeIds.join(",")}) AND status = "${doneColumn}"`;
-}
-
-export function createJiraClient(): Version3Client {
-	return new Version3Client({
-		host: `https://${process.env.JIRA_SITE}`,
-		authentication: {
-			basic: {
-				email: process.env.JIRA_EMAIL ?? "",
-				apiToken: process.env.JIRA_TOKEN ?? "",
-			},
-		},
-	});
-}
-
-export function resolveClaudePath(claudePath: "auto" | string): string {
-	if (claudePath !== "auto") return claudePath;
-	const result = spawnSync("which", ["claude"]);
-	if (result.status === 0) return result.stdout.toString().trim();
-	throw new Error(
-		"Could not find claude CLI. Set agents.claudePath in dispatchator.config.ts",
-	);
 }

@@ -1,9 +1,5 @@
-// Zustand store for dispatchator
-
-import { readdirSync, unlinkSync, watch } from "node:fs";
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
-import { getConfig } from "./config";
 import {
 	focusAgent as focusAgentPane,
 	getActiveAgent,
@@ -11,112 +7,24 @@ import {
 	getWindowTitles,
 	killAgent as killAgentPane,
 	spawnAgent,
-} from "./spawn";
+} from "./agent/spawn";
+import { getWaitingAgents, watchAgentState } from "./agent/state";
+import {
+	ACTIONS,
+	type Agent,
+	type AgentStatus,
+	type Store,
+} from "./agent/types";
+import { getConfig } from "./config";
 
-const AGENTS_STATE_DIR = `${process.cwd()}/ia/state/agents`;
+const MAX_LOGS = 100;
 
-function getWaitingAgents(): Set<string> {
-	try {
-		const files = readdirSync(AGENTS_STATE_DIR);
-		return new Set(
-			files
-				.filter((f) => f.endsWith(".waiting"))
-				.map((f) => f.replace(".waiting", "")),
-		);
-	} catch {
-		return new Set();
-	}
-}
-
-function _getDoneAgents(): Set<string> {
-	try {
-		const files = readdirSync(AGENTS_STATE_DIR);
-		return new Set(
-			files
-				.filter((f) => f.endsWith(".done"))
-				.map((f) => f.replace(".done", "")),
-		);
-	} catch {
-		return new Set();
-	}
-}
-
-function clearDoneFile(agentId: string): void {
-	try {
-		unlinkSync(`${AGENTS_STATE_DIR}/${agentId}.done`);
-	} catch {
-		/* ignore */
-	}
-}
-
-export type AgentStatus = "queued" | "working" | "waiting" | "idle";
-
-export type Model = "small" | "medium" | "strong";
-export type AgentMode = "default" | "plan";
-
-export interface Agent {
-	id: string; // ticket ID (e.g. KAN-8)
-	summary: string; // ticket summary
-	title: string; // tmux window title (set by agent)
-	status: AgentStatus;
-	model: Model;
-	thinking: boolean;
-	agentMode: AgentMode;
-	workflow: string; // workflow to execute (e.g. 'intent', 'work-item-to-code-plan')
-}
-
-export type Action = "kill" | "done";
-export const ACTIONS: { id: Action; icon: string }[] = [
-	{ id: "kill", icon: "✘" },
-	{ id: "done", icon: "✔" },
-];
-
-export interface Store {
-	// Config
-	maxAgents: number;
-
-	// State
-	agents: Agent[];
-	logs: string[];
-	selectedIndex: number;
-	activeAgentId: string | null;
-	showActions: boolean;
-	actionIndex: number;
-
-	// Actions
-	addAgent: (
-		id: string,
-		summary: string,
-		model?: Model,
-		thinking?: boolean,
-		agentMode?: AgentMode,
-		workflow?: string,
-	) => void;
-	updateAgent: (id: string, status: AgentStatus) => void;
-	focusAgent: (id: string) => void;
-	log: (message: string) => void;
-	selectNext: () => void;
-	selectPrev: () => void;
-	focusSelected: () => void;
-	syncAgentsState: () => void;
-	removeAgent: (id: string) => void;
-	toggleActions: () => void;
-	nextAction: () => void;
-	prevAction: () => void;
-	executeAction: () => void;
-	getActions: () => typeof ACTIONS;
-}
-
-const MAX_LOGS = 100; // We'll slice in the UI based on available space
-
-// Get existing agents from tmux at startup
 const existingAgents = new Set(getRunningAgents());
 
 export const useStore = create<Store>()(
 	subscribeWithSelector((set, get) => ({
 		maxAgents: getConfig().agents.maxConcurrent,
 
-		// State
 		agents: [],
 		logs: [],
 		selectedIndex: 0,
@@ -124,7 +32,6 @@ export const useStore = create<Store>()(
 		showActions: false,
 		actionIndex: 0,
 
-		// Actions
 		addAgent: (
 			id,
 			summary,
@@ -135,7 +42,6 @@ export const useStore = create<Store>()(
 		) => {
 			if (get().agents.some((a) => a.id === id)) return;
 
-			// Check if this agent already exists in tmux
 			const alreadyRunning = existingAgents.has(id);
 			const waiting = getWaitingAgents();
 			const status: AgentStatus = alreadyRunning
@@ -217,14 +123,11 @@ export const useStore = create<Store>()(
 				activeAgentId: activeId,
 				agents: s.agents.map((a) => {
 					if (a.status === "queued") return a;
-					// If tmux window is dead, back to queued
 					if (!running.has(a.id))
 						return { ...a, status: "queued" as AgentStatus };
-					// Update working/waiting based on HITL state
 					const newStatus: AgentStatus = waiting.has(a.id)
 						? "waiting"
 						: "working";
-					// Update title from tmux
 					const newTitle = titles.get(a.id) || a.title;
 					return { ...a, status: newStatus, title: newTitle };
 				}),
@@ -235,7 +138,6 @@ export const useStore = create<Store>()(
 			const agent = get().agents.find((a) => a.id === id);
 			if (!agent) return;
 
-			// Kill tmux window if running
 			if (agent.status === "working" || agent.status === "waiting") {
 				killAgentPane(id);
 			}
@@ -291,7 +193,6 @@ export const useStore = create<Store>()(
 				if (agent.status === "working" || agent.status === "waiting") {
 					killAgentPane(agent.id);
 				}
-				// Remove agent from list (done = no longer exists)
 				set((s) => ({
 					agents: s.agents.filter((a) => a.id !== agent.id),
 					logs: [...s.logs, `✅ ${agent.id}: done`].slice(-MAX_LOGS),
@@ -303,11 +204,9 @@ export const useStore = create<Store>()(
 	})),
 );
 
-// Selectors
 const getQueued = (s: Store) => s.agents.filter((a) => a.status === "queued");
 const getWorking = (s: Store) => s.agents.filter((a) => a.status === "working");
 
-// Subscribe: when queue changes, try to spawn
 useStore.subscribe(
 	(s) => ({ queued: getQueued(s).length, working: getWorking(s).length }),
 	({ queued, working }, _prev) => {
@@ -336,34 +235,12 @@ useStore.subscribe(
 	{ equalityFn: (a, b) => a.queued === b.queued && a.working === b.working },
 );
 
-// Watch for state file changes
-const watcher = watch(AGENTS_STATE_DIR, (_event, filename) => {
-	if (filename?.endsWith(".waiting")) {
-		useStore.getState().syncAgentsState();
-	} else if (filename?.endsWith(".done")) {
-		const agentId = filename.replace(".done", "");
-		clearDoneFile(agentId);
-		useStore.getState().removeAgent(agentId);
-	} else if (filename?.endsWith(".kill-agent")) {
-		const agentId = filename.replace(".kill-agent", "");
-		try {
-			unlinkSync(`${AGENTS_STATE_DIR}/${filename}`);
-		} catch {
-			/* ignore */
-		}
+watchAgentState(
+	() => useStore.getState().syncAgentsState(),
+	(agentId) => useStore.getState().removeAgent(agentId),
+	(agentId) => {
 		killAgentPane(agentId);
 		useStore.getState().removeAgent(agentId);
 		useStore.getState().log(`💀 ${agentId}: killed, will re-spawn`);
-	}
-});
-
-// Cleanup on exit
-process.on("exit", () => watcher.close());
-process.on("SIGINT", () => {
-	watcher.close();
-	process.exit();
-});
-process.on("SIGTERM", () => {
-	watcher.close();
-	process.exit();
-});
+	},
+);
