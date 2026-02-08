@@ -2,6 +2,7 @@
 // The orchestrator runs in a separate Warp window without tmux
 
 import { spawn, spawnSync } from 'child_process'
+import { getConfig, resolveClaudePath } from './config'
 
 const AGENTS_SESSION = 'yaaf-agents'
 
@@ -45,12 +46,13 @@ export interface SpawnOptions {
 }
 
 export async function spawnAgent(ticketId: string, summary: string, options: SpawnOptions = {}): Promise<string | null> {
-  const claudePath = '/Users/matthieuczeski/.nvm/versions/node/v22.16.0/bin/claude'
+  const config = getConfig()
+  const claudePath = resolveClaudePath(config.agents.claudePath)
   const cwd = process.cwd()
-  const model = MODEL_MAP[options.model || 'small']
+  const model = MODEL_MAP[options.model || config.agents.defaultModel]
   const thinking = options.thinking || false
   const agentMode = options.agentMode || 'default'
-  const workflow = options.workflow || 'intent'
+  const workflow = options.workflow || config.agents.defaultWorkflow
   const prompt = `/workflow:${workflow} ${ticketId}`
   const thinkingFlag = thinking ? '--settings \'{"alwaysThinkingEnabled":true}\' ' : ''
   const modeFlag = agentMode !== 'default' ? `--permission-mode ${agentMode} ` : ''

@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import { spawnAgent, focusAgent as focusAgentPane, getRunningAgents, getActiveAgent, killAgent as killAgentPane, getWindowTitles } from './spawn'
 import { readdirSync, watch, unlinkSync } from 'fs'
+import { getConfig } from './config'
 
 const AGENTS_STATE_DIR = `${process.cwd()}/ia/state/agents`
 
@@ -89,8 +90,7 @@ const existingAgents = new Set(getRunningAgents())
 
 export const useStore = create<Store>()(
   subscribeWithSelector((set, get) => ({
-    // Config
-    maxAgents: 1,
+    maxAgents: getConfig().agents.maxConcurrent,
 
     // State
     agents: [],
@@ -101,7 +101,7 @@ export const useStore = create<Store>()(
     actionIndex: 0,
 
     // Actions
-    addAgent: (id, summary, model = 'small', thinking = false, agentMode = 'default', workflow = 'intent') => {
+    addAgent: (id, summary, model = getConfig().agents.defaultModel, thinking = false, agentMode = 'default', workflow = getConfig().agents.defaultWorkflow) => {
       if (get().agents.some(a => a.id === id)) return
 
       // Check if this agent already exists in tmux
