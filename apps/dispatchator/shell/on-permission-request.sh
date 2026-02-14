@@ -1,5 +1,4 @@
 #!/bin/bash
 [ -z "$YAAF_AGENT_ID" ] && exit 0
 STATE_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}/ia/state/agents"
-rm -f "$STATE_DIR/${YAAF_AGENT_ID}.state"
-tmux kill-window -t "yaaf-agents:${YAAF_AGENT_ID}" 2>/dev/null
+echo "waiting" > "$STATE_DIR/${YAAF_AGENT_ID}.state"

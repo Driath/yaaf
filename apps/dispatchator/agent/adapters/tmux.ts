@@ -73,7 +73,7 @@ export async function spawnAgent(
 		: "";
 	const modeFlag =
 		agentMode !== "default" ? `--permission-mode ${agentMode} ` : "";
-	const cmd = `cd ${cwd} && exec ${claudePath} --model ${model} ${thinkingFlag}${modeFlag}"${prompt}"`;
+	const cmd = `cd ${cwd} && YAAF_AGENT_ID=${ticketId} exec ${claudePath} --model ${model} ${thinkingFlag}${modeFlag}"${prompt}"`;
 	console.log(
 		`[spawn] ${ticketId}: workflow=${workflow}, thinking=${thinking}, cmd=${cmd}`,
 	);

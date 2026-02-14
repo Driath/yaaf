@@ -2,7 +2,6 @@
 import { render, useApp, useInput } from "ink";
 import { Dashboard } from "./ui/Dashboard";
 import { useListeners } from "./ui/useListeners";
-import { useSources } from "./ui/useSources";
 
 function App() {
 	const { exit } = useApp();
@@ -13,7 +12,6 @@ function App() {
 		}
 	});
 
-	useSources();
 	useListeners();
 
 	return <Dashboard />;

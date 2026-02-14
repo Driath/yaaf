@@ -1,8 +1,8 @@
 import figures from "figures";
 import { Box, Text } from "ink";
-import type { Agent, AgentStatus } from "../types";
+import type { Agent } from "../types";
 
-const STATUS: Record<AgentStatus, { icon: string; color: string }> = {
+const STATUS: Record<string, { icon: string; color: string }> = {
 	queued: { icon: figures.circle, color: "yellow" },
 	working: { icon: figures.play, color: "blue" },
 	waiting: { icon: "?", color: "magenta" },
@@ -34,6 +34,9 @@ export function AgentRow({
 }: AgentRowProps) {
 	const pointer = isSelected ? figures.pointer : " ";
 	const activeIcon = isActive ? figures.radioOn : figures.radioOff;
+	const statusEntry = STATUS[agent.status];
+	const statusIcon = statusEntry?.icon ?? agent.status;
+	const statusColor = statusEntry?.color ?? "white";
 
 	return (
 		<Box>
@@ -44,9 +47,7 @@ export function AgentRow({
 				<Text color={isActive ? "green" : "gray"}>{activeIcon}</Text>
 			</Box>
 			<Box width={3}>
-				<Text color={STATUS[agent.status].color}>
-					{STATUS[agent.status].icon}
-				</Text>
+				<Text color={statusColor}>{statusIcon}</Text>
 			</Box>
 			<Box width={5}>
 				<Text dimColor>{MODEL_ICON[agent.model]}</Text>

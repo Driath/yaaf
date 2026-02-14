@@ -1,9 +1,6 @@
 import type { StateCreator } from "zustand";
-import { killAgent as killAgentPane } from "../agent/adapters/tmux";
 import type { AgentsSlice } from "../agent/agents-slice";
-import { ACTIONS, type AgentStatus } from "../agent/types";
-
-const MAX_LOGS = 100;
+import { ACTIONS } from "../agent/types";
 
 export interface UiSlice {
 	selectedIndex: number;
@@ -69,7 +66,8 @@ export const createUiSlice: StateCreator<
 	getActions: () => ACTIONS,
 
 	executeAction: () => {
-		const { agents, selectedIndex, actionIndex } = get();
+		const { agents, selectedIndex, actionIndex, updateAgent, removeAgent } =
+			get();
 		const agent = agents[selectedIndex];
 		if (!agent) return;
 
@@ -79,26 +77,11 @@ export const createUiSlice: StateCreator<
 			action === "kill" &&
 			(agent.status === "working" || agent.status === "waiting")
 		) {
-			killAgentPane(agent.id);
-			set((s) => ({
-				agents: s.agents.map((a) =>
-					a.id === agent.id ? { ...a, status: "queued" as AgentStatus } : a,
-				),
-				logs: [...s.logs, `💀 ${agent.id}: killed, will restart`].slice(
-					-MAX_LOGS,
-				),
-				showActions: false,
-			}));
+			updateAgent(agent.id, "queued");
+			set({ showActions: false });
 		} else if (action === "done") {
-			if (agent.status === "working" || agent.status === "waiting") {
-				killAgentPane(agent.id);
-			}
-			set((s) => ({
-				agents: s.agents.filter((a) => a.id !== agent.id),
-				logs: [...s.logs, `✅ ${agent.id}: done`].slice(-MAX_LOGS),
-				showActions: false,
-				selectedIndex: Math.min(s.selectedIndex, s.agents.length - 2),
-			}));
+			removeAgent(agent.id);
+			set({ showActions: false });
 		}
 	},
 });

@@ -1,24 +1,16 @@
-import { useEffect } from "react";
-import type { Observable } from "rxjs";
+import { slotsAvailable$ } from "../agent/events/slots";
+import { fs$ } from "../agent/sources/fs";
+import { tmux$ } from "../agent/sources/tmux";
 import { getConfig } from "../config";
-import { useLogStore } from "../log/store";
-import type { JiraPollResult } from "../work-item/sources/jira";
 import { createJiraSource$ } from "../work-item/sources/jira";
 
 const config = getConfig();
-const workItemSources$: Observable<JiraPollResult>[] = config.workItems
-	.filter((s) => s.provider === "jira")
-	.map((s) => createJiraSource$(s));
 
-export { workItemSources$ };
-
-export function useSources() {
-	useEffect(() => {
-		const { log } = useLogStore.getState();
-		log({ type: "source", source: "FS" });
-		log({ type: "source", source: "SlotsAvailable" });
-		for (const _ of workItemSources$) {
-			log({ type: "source", source: "Jira" });
-		}
-	}, []);
-}
+export const sources = {
+	fs$,
+	tmux$,
+	slotsAvailable$,
+	jira$: config.workItems
+		.filter((s) => s.provider === "jira")
+		.map((s) => createJiraSource$(s)),
+};

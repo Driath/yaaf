@@ -2,14 +2,14 @@ import { Observable } from "rxjs";
 import { watchAgentState } from "../adapters/state-watcher";
 
 export interface FsEvent {
-	type: "waiting" | "done" | "kill";
-	agentId?: string;
+	type: "status" | "kill";
+	agentId: string;
+	status?: string;
 }
 
 export const fs$ = new Observable<FsEvent>((subscriber) => {
 	watchAgentState(
-		() => subscriber.next({ type: "waiting" }),
-		(agentId) => subscriber.next({ type: "done", agentId }),
+		(agentId, status) => subscriber.next({ type: "status", agentId, status }),
 		(agentId) => subscriber.next({ type: "kill", agentId }),
 	);
 });

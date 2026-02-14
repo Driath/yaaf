@@ -1,51 +1,41 @@
-import { readdirSync, unlinkSync, watch } from "node:fs";
+import { readFileSync, unlinkSync, watch } from "node:fs";
 
 const AGENTS_STATE_DIR = `${process.cwd()}/ia/state/agents`;
 
-export function getWaitingAgents(): Set<string> {
+export function clearStateFile(agentId: string): void {
 	try {
-		const files = readdirSync(AGENTS_STATE_DIR);
-		return new Set(
-			files
-				.filter((f) => f.endsWith(".waiting"))
-				.map((f) => f.replace(".waiting", "")),
-		);
-	} catch {
-		return new Set();
-	}
-}
-
-export function clearDoneFile(agentId: string): void {
-	try {
-		unlinkSync(`${AGENTS_STATE_DIR}/${agentId}.done`);
+		unlinkSync(`${AGENTS_STATE_DIR}/${agentId}.state`);
 	} catch {
 		/* ignore */
 	}
 }
 
-export function clearKillFile(filename: string): void {
+function readAndDelete(filepath: string): string | null {
 	try {
-		unlinkSync(`${AGENTS_STATE_DIR}/${filename}`);
+		const content = readFileSync(filepath, "utf-8").trim();
+		unlinkSync(filepath);
+		return content;
 	} catch {
-		/* ignore */
+		return null;
 	}
 }
 
 export function watchAgentState(
-	onWaiting: () => void,
-	onDone: (agentId: string) => void,
+	onStatus: (agentId: string, status: string) => void,
 	onKill: (agentId: string) => void,
 ) {
 	const watcher = watch(AGENTS_STATE_DIR, (_event, filename) => {
-		if (filename?.endsWith(".waiting")) {
-			onWaiting();
-		} else if (filename?.endsWith(".done")) {
-			const agentId = filename.replace(".done", "");
-			clearDoneFile(agentId);
-			onDone(agentId);
-		} else if (filename?.endsWith(".kill-agent")) {
+		if (!filename) return;
+
+		if (filename.endsWith(".state")) {
+			const agentId = filename.replace(".state", "");
+			const status = readAndDelete(`${AGENTS_STATE_DIR}/${filename}`);
+			if (status) {
+				onStatus(agentId, status);
+			}
+		} else if (filename.endsWith(".kill-agent")) {
 			const agentId = filename.replace(".kill-agent", "");
-			clearKillFile(filename);
+			readAndDelete(`${AGENTS_STATE_DIR}/${filename}`);
 			onKill(agentId);
 		}
 	});

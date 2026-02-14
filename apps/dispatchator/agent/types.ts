@@ -1,5 +1,3 @@
-export type AgentStatus = "queued" | "working" | "waiting" | "idle";
-
 export type Model = "small" | "medium" | "strong";
 export type AgentMode = "default" | "plan";
 
@@ -7,7 +5,7 @@ export interface Agent {
 	id: string;
 	summary: string;
 	title: string;
-	status: AgentStatus;
+	status: string;
 	model: Model;
 	thinking: boolean;
 	agentMode: AgentMode;
