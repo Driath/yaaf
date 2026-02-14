@@ -1,7 +1,7 @@
 import figures from "figures";
 import { Box, Text, useInput, useStdout } from "ink";
+import { AgentRow } from "../agent/ui/AgentRow";
 import { useStore } from "../store";
-import { AgentRow } from "./AgentRow";
 import { LogPanel } from "./LogPanel";
 
 export function Dashboard() {

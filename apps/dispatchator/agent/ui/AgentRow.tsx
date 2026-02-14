@@ -1,6 +1,6 @@
 import figures from "figures";
 import { Box, Text } from "ink";
-import type { Agent, AgentStatus } from "../agent/types";
+import type { Agent, AgentStatus } from "../types";
 
 const STATUS: Record<AgentStatus, { icon: string; color: string }> = {
 	queued: { icon: figures.circle, color: "yellow" },

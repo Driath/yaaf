@@ -1,14 +1,14 @@
 import { useEffect } from "react";
 import { getConfig } from "../config";
 import { useStore } from "../store";
+import { buildDoneJql, createJiraClient } from "../work-item/adapters/jira";
 import {
-	buildDoneJql,
-	createJiraClient,
 	hasThinking,
 	parseAgentMode,
 	parseModelFromLabels,
 	parseWorkflow,
-} from "../work-item";
+} from "../work-item/labels";
+import type { WorkItem } from "../work-item/types";
 
 const client = createJiraClient();
 
@@ -39,13 +39,16 @@ export function usePolling() {
 							summary?: string;
 							labels?: string[];
 						};
-						const summary = fields.summary || "No summary";
 						const labels = fields.labels || [];
-						const model = parseModelFromLabels(labels);
-						const thinking = hasThinking(labels);
-						const agentMode = parseAgentMode(labels);
-						const workflow = parseWorkflow(labels);
-						addAgent(issue.key, summary, model, thinking, agentMode, workflow);
+						const item: WorkItem = {
+							id: issue.key,
+							summary: fields.summary || "No summary",
+							model: parseModelFromLabels(labels, config.agents.defaultModel),
+							thinking: hasThinking(labels),
+							agentMode: parseAgentMode(labels),
+							workflow: parseWorkflow(labels, config.agents.defaultWorkflow),
+						};
+						addAgent(item);
 					}
 				}
 
@@ -80,5 +83,7 @@ export function usePolling() {
 		config.workItem.maxResults,
 		config.workItem.queries,
 		config.polling.jiraInterval,
+		config.agents.defaultModel,
+		config.agents.defaultWorkflow,
 	]);
 }

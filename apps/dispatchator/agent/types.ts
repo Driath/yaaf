@@ -26,35 +26,3 @@ export interface SpawnOptions {
 	agentMode?: AgentMode;
 	workflow?: string;
 }
-
-export interface Store {
-	maxAgents: number;
-	agents: Agent[];
-	logs: string[];
-	selectedIndex: number;
-	activeAgentId: string | null;
-	showActions: boolean;
-	actionIndex: number;
-
-	addAgent: (
-		id: string,
-		summary: string,
-		model?: Model,
-		thinking?: boolean,
-		agentMode?: AgentMode,
-		workflow?: string,
-	) => void;
-	updateAgent: (id: string, status: AgentStatus) => void;
-	focusAgent: (id: string) => void;
-	log: (message: string) => void;
-	selectNext: () => void;
-	selectPrev: () => void;
-	focusSelected: () => void;
-	syncAgentsState: () => void;
-	removeAgent: (id: string) => void;
-	toggleActions: () => void;
-	nextAction: () => void;
-	prevAction: () => void;
-	executeAction: () => void;
-	getActions: () => typeof ACTIONS;
-}

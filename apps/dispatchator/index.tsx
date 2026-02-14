@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
 import { render, useApp, useInput } from "ink";
-import { Dashboard } from "./components/Dashboard";
-import { usePolling } from "./hooks/usePolling";
-import { useWatch } from "./hooks/useWatch";
+import { useWatch } from "./agent/ui/useWatch";
+import { Dashboard } from "./ui/Dashboard";
+import { usePolling } from "./ui/usePolling";
+import "./store/orchestrator";
 
-// Validate env
 if (!process.env.JIRA_EMAIL || !process.env.JIRA_TOKEN) {
 	console.error("❌ Missing JIRA credentials in .env");
 	console.error("Required: JIRA_EMAIL, JIRA_TOKEN, JIRA_SITE");

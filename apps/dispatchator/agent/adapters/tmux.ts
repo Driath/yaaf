@@ -1,9 +1,6 @@
-// Spawn agents in a dedicated tmux session (yaaf-agents)
-// The orchestrator runs in a separate Warp window without tmux
-
 import { spawn, spawnSync } from "node:child_process";
-import { getConfig } from "../config";
-import type { Model, SpawnOptions } from "./types";
+import { getConfig } from "../../config";
+import type { Model, SpawnOptions } from "../types";
 
 const AGENTS_SESSION = "yaaf-agents";
 
@@ -16,7 +13,6 @@ function resolveClaudePath(path: "auto" | string): string {
 	);
 }
 
-// Check if agents session exists
 function hasAgentsSession(): boolean {
 	const result = spawnSync("tmux", ["has-session", "-t", AGENTS_SESSION], {
 		stdio: "ignore",
@@ -24,7 +20,6 @@ function hasAgentsSession(): boolean {
 	return result.status === 0;
 }
 
-// Check if an agent window already exists
 function hasAgentWindow(ticketId: string): boolean {
 	const result = spawnSync("tmux", [
 		"list-windows",
@@ -38,7 +33,6 @@ function hasAgentWindow(ticketId: string): boolean {
 	return windows.includes(ticketId);
 }
 
-// Get all running agent windows
 export function getRunningAgents(): string[] {
 	const result = spawnSync("tmux", [
 		"list-windows",
@@ -84,18 +78,15 @@ export async function spawnAgent(
 		`[spawn] ${ticketId}: workflow=${workflow}, thinking=${thinking}, cmd=${cmd}`,
 	);
 
-	// Wait for agents session (user needs to run bun start:agents)
 	if (!hasAgentsSession()) {
-		return Promise.resolve(null); // Will retry on next sync
+		return Promise.resolve(null);
 	}
 
-	// Skip if agent window already exists
 	if (hasAgentWindow(ticketId)) {
 		return Promise.resolve(ticketId);
 	}
 
 	return new Promise((resolve, reject) => {
-		// Create a new window for this agent
 		const proc = spawn("tmux", [
 			"new-window",
 			"-t",
@@ -116,12 +107,10 @@ export async function spawnAgent(
 	});
 }
 
-// Switch to a specific agent window
 export function focusAgent(ticketId: string): void {
 	spawnSync("tmux", ["select-window", "-t", `${AGENTS_SESSION}:${ticketId}`]);
 }
 
-// Get the currently active agent window
 export function getActiveAgent(): string | null {
 	const result = spawnSync("tmux", [
 		"display-message",
@@ -135,7 +124,6 @@ export function getActiveAgent(): string | null {
 	return name && name !== "bash" ? name : null;
 }
 
-// Kill an agent window
 export function killAgent(ticketId: string): boolean {
 	const result = spawnSync("tmux", [
 		"kill-window",
@@ -145,21 +133,6 @@ export function killAgent(ticketId: string): boolean {
 	return result.status === 0;
 }
 
-// Get the currently focused agent window
-export function getFocusedAgent(): string | null {
-	const result = spawnSync("tmux", [
-		"display-message",
-		"-t",
-		AGENTS_SESSION,
-		"-p",
-		"#{window_name}",
-	]);
-	if (result.status !== 0) return null;
-	const name = result.stdout.toString().trim();
-	return name && name !== "bash" ? name : null;
-}
-
-// Get window titles for all agents
 export function getWindowTitles(): Map<string, string> {
 	const result = spawnSync("tmux", [
 		"list-windows",
