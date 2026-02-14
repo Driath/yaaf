@@ -1,8 +1,9 @@
 import figures from "figures";
 import { Box, Text, useInput, useStdout } from "ink";
 import { AgentRow } from "../agent/ui/AgentRow";
+import { useLogStore } from "../log/store";
+import { LogPanel } from "../log/ui/LogPanel";
 import { useStore } from "../store";
-import { LogPanel } from "./LogPanel";
 
 export function Dashboard() {
 	const { stdout } = useStdout();
@@ -10,7 +11,7 @@ export function Dashboard() {
 	const height = stdout?.rows || 24;
 
 	const agents = useStore((s) => s.agents);
-	const logs = useStore((s) => s.logs);
+	const logs = useLogStore((s) => s.logs);
 	const maxAgents = useStore((s) => s.maxAgents);
 	const selectedIndex = useStore((s) => s.selectedIndex);
 	const activeAgentId = useStore((s) => s.activeAgentId);

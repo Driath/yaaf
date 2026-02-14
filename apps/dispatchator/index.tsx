@@ -1,15 +1,8 @@
 #!/usr/bin/env bun
 import { render, useApp, useInput } from "ink";
-import { useWatch } from "./agent/ui/useWatch";
 import { Dashboard } from "./ui/Dashboard";
-import { usePolling } from "./ui/usePolling";
-import "./store/orchestrator";
-
-if (!process.env.JIRA_EMAIL || !process.env.JIRA_TOKEN) {
-	console.error("❌ Missing JIRA credentials in .env");
-	console.error("Required: JIRA_EMAIL, JIRA_TOKEN, JIRA_SITE");
-	process.exit(1);
-}
+import { useListeners } from "./ui/useListeners";
+import { useSources } from "./ui/useSources";
 
 function App() {
 	const { exit } = useApp();
@@ -20,8 +13,8 @@ function App() {
 		}
 	});
 
-	usePolling();
-	useWatch();
+	useSources();
+	useListeners();
 
 	return <Dashboard />;
 }

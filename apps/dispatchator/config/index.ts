@@ -1,13 +1,23 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+export interface JiraProviderConfig {
+	site: string;
+	email: string;
+	token: string;
+}
+
+export interface WorkItemSourceConfig {
+	provider: "jira";
+	providerConfig: JiraProviderConfig;
+	queries: string[];
+	doneColumn: string;
+	maxResults: number;
+	fields: string[];
+}
+
 export interface DispatchatorConfig {
-	workItem: {
-		queries: string[];
-		doneColumn: string;
-		maxResults: number;
-		fields: string[];
-	};
+	workItems: WorkItemSourceConfig[];
 	polling: {
 		jiraInterval: number;
 		syncInterval: number;
@@ -47,18 +57,26 @@ export function getConfig(): DispatchatorConfig {
 
 function buildFallbackConfig(): DispatchatorConfig {
 	return {
-		workItem: {
-			queries: ['project = KAN AND status = "Agent-Ready" ORDER BY rank ASC'],
-			doneColumn: "Done",
-			maxResults: 50,
-			fields: ["key", "summary", "description", "labels"],
-		},
+		workItems: [
+			{
+				provider: "jira",
+				providerConfig: {
+					site: process.env.JIRA_SITE ?? "",
+					email: process.env.JIRA_EMAIL ?? "",
+					token: process.env.JIRA_TOKEN ?? "",
+				},
+				queries: ['project = KAN AND status = "Agent-Ready" ORDER BY rank ASC'],
+				doneColumn: "Done",
+				maxResults: 50,
+				fields: ["key", "summary", "description", "labels"],
+			},
+		],
 		polling: {
 			jiraInterval: 10_000,
 			syncInterval: 2_000,
 		},
 		agents: {
-			maxConcurrent: 1,
+			maxConcurrent: 2,
 			defaultModel: "small",
 			defaultWorkflow: "intent",
 			claudePath: "auto",
