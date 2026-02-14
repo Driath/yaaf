@@ -1,6 +1,7 @@
 import type { StateCreator } from "zustand";
 import type { AgentsSlice } from "../agent/agents-slice";
 import { ACTIONS } from "../agent/types";
+import type { WorkItemsSlice } from "../work-item/work-items-slice";
 
 export interface UiSlice {
 	selectedIndex: number;
@@ -18,7 +19,7 @@ export interface UiSlice {
 }
 
 export const createUiSlice: StateCreator<
-	AgentsSlice & UiSlice,
+	WorkItemsSlice & AgentsSlice & UiSlice,
 	[["zustand/subscribeWithSelector", never]],
 	[],
 	UiSlice
@@ -28,25 +29,23 @@ export const createUiSlice: StateCreator<
 	actionIndex: 0,
 
 	selectNext: () => {
-		const { agents, selectedIndex } = get();
-		if (agents.length === 0) return;
-		set({ selectedIndex: (selectedIndex + 1) % agents.length });
+		const { workItems, selectedIndex } = get();
+		if (workItems.length === 0) return;
+		set({ selectedIndex: (selectedIndex + 1) % workItems.length });
 	},
 
 	selectPrev: () => {
-		const { agents, selectedIndex } = get();
-		if (agents.length === 0) return;
+		const { workItems, selectedIndex } = get();
+		if (workItems.length === 0) return;
 		set({
-			selectedIndex: (selectedIndex - 1 + agents.length) % agents.length,
+			selectedIndex: (selectedIndex - 1 + workItems.length) % workItems.length,
 		});
 	},
 
 	focusSelected: () => {
-		const { agents, selectedIndex, focusAgent } = get();
-		const agent = agents[selectedIndex];
-		if (agent && (agent.status === "working" || agent.status === "waiting")) {
-			focusAgent(agent.id);
-		}
+		const { workItems, selectedIndex, focusWorkItem } = get();
+		const item = workItems[selectedIndex];
+		if (item) focusWorkItem(item.id);
 	},
 
 	toggleActions: () => {
@@ -66,21 +65,23 @@ export const createUiSlice: StateCreator<
 	getActions: () => ACTIONS,
 
 	executeAction: () => {
-		const { agents, selectedIndex, actionIndex, updateAgent, removeAgent } =
-			get();
-		const agent = agents[selectedIndex];
-		if (!agent) return;
+		const {
+			workItems,
+			selectedIndex,
+			actionIndex,
+			detachAgent,
+			removeWorkItem,
+		} = get();
+		const item = workItems[selectedIndex];
+		if (!item) return;
 
 		const action = ACTIONS[actionIndex].id;
 
-		if (
-			action === "kill" &&
-			(agent.status === "working" || agent.status === "waiting")
-		) {
-			updateAgent(agent.id, "queued");
+		if (action === "kill") {
+			detachAgent(item.id);
 			set({ showActions: false });
 		} else if (action === "done") {
-			removeAgent(agent.id);
+			removeWorkItem(item.id);
 			set({ showActions: false });
 		}
 	},

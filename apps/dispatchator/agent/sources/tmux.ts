@@ -13,7 +13,8 @@ interface TmuxSnapshot {
 
 export type TmuxEvent =
 	| { type: "activeChanged"; agentId: string | null }
-	| { type: "crashed"; agentId: string }
+	| { type: "windowAdded"; agentId: string }
+	| { type: "windowRemoved"; agentId: string }
 	| { type: "titleChanged"; agentId: string; title: string };
 
 const snapshot$ = interval(2000).pipe(
@@ -42,9 +43,17 @@ export const tmux$ = snapshot$.pipe(
 		}
 
 		const prevRunning = new Set(prev.runningIds);
+		const currRunning = new Set(curr.runningIds);
+
+		for (const id of currRunning) {
+			if (!prevRunning.has(id)) {
+				events.push({ type: "windowAdded", agentId: id });
+			}
+		}
+
 		for (const id of prevRunning) {
-			if (!curr.runningIds.includes(id)) {
-				events.push({ type: "crashed", agentId: id });
+			if (!currRunning.has(id)) {
+				events.push({ type: "windowRemoved", agentId: id });
 			}
 		}
 

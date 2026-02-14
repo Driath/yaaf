@@ -1,20 +1,21 @@
 import figures from "figures";
 import { Box, Text, useInput, useStdout } from "ink";
-import { AgentRow } from "../agent/ui/AgentRow";
 import { useLogStore } from "../log/store";
 import { LogPanel } from "../log/ui/LogPanel";
 import { useStore } from "../store";
+import { WorkItemRow } from "../work-item/ui/WorkItemRow";
 
 export function Dashboard() {
 	const { stdout } = useStdout();
 	const width = stdout?.columns || 80;
 	const height = stdout?.rows || 24;
 
+	const workItems = useStore((s) => s.workItems);
 	const agents = useStore((s) => s.agents);
 	const logs = useLogStore((s) => s.logs);
 	const maxAgents = useStore((s) => s.maxAgents);
 	const selectedIndex = useStore((s) => s.selectedIndex);
-	const activeAgentId = useStore((s) => s.activeAgentId);
+	const activeWorkItemId = useStore((s) => s.activeWorkItemId);
 	const showActions = useStore((s) => s.showActions);
 	const actionIndex = useStore((s) => s.actionIndex);
 	const selectNext = useStore((s) => s.selectNext);
@@ -26,12 +27,12 @@ export function Dashboard() {
 	const executeAction = useStore((s) => s.executeAction);
 	const actions = useStore((s) => s.getActions());
 
-	const working = agents.filter((a) => a.status === "working").length;
-	const waiting = agents.filter((a) => a.status === "waiting").length;
-	const queued = agents.filter((a) => a.status === "queued").length;
+	const agentsByWorkItem = new Map(agents.map((a) => [a.workItemId, a]));
+	const attached = agents.length;
+	const queued = workItems.filter((w) => !agentsByWorkItem.has(w.id)).length;
 
-	const agentLines = Math.max(agents.length, 1);
-	const logsAvailable = Math.max(0, height - 2 - agentLines - 2 - 1);
+	const itemLines = Math.max(workItems.length, 1);
+	const logsAvailable = Math.max(0, height - 3 - itemLines - 2 - 1);
 	const visibleLogs = logs.slice(-logsAvailable);
 
 	useInput((_input, key) => {
@@ -50,17 +51,32 @@ export function Dashboard() {
 
 	return (
 		<Box flexDirection="column" width={width} height={height}>
+			<Box>
+				<Box width={36}>
+					<Text dimColor>{"      workitem"}</Text>
+				</Box>
+				<Box width={24}>
+					<Text dimColor>workflow</Text>
+				</Box>
+				<Box width={9}>
+					<Text dimColor>opts</Text>
+				</Box>
+				<Box flexGrow={1} marginLeft={1}>
+					<Text dimColor>agent</Text>
+				</Box>
+			</Box>
 			<Text dimColor>{"─".repeat(width - 2)}</Text>
 
-			{agents.length === 0 ? (
-				<Text dimColor>(no agents)</Text>
+			{workItems.length === 0 ? (
+				<Text dimColor>(no work items)</Text>
 			) : (
-				agents.map((agent, index) => (
-					<AgentRow
-						key={agent.id}
-						agent={agent}
+				workItems.map((item, index) => (
+					<WorkItemRow
+						key={item.id}
+						workItem={item}
+						agent={agentsByWorkItem.get(item.id)}
 						isSelected={index === selectedIndex}
-						isActive={agent.id === activeAgentId}
+						isActive={item.id === activeWorkItemId}
 						showActions={showActions}
 						actionIndex={actionIndex}
 						actions={actions}
@@ -70,9 +86,9 @@ export function Dashboard() {
 
 			<Box marginTop={1}>
 				<Text dimColor>
-					{working + waiting}/{maxAgents} active | {waiting} waiting | {queued}{" "}
-					queued | {figures.arrowUp}/{figures.arrowDown} nav | enter focus |{" "}
-					{figures.arrowRight} actions | q quit
+					{attached}/{maxAgents} active | {queued} queued | {figures.arrowUp}/
+					{figures.arrowDown} nav | enter focus | {figures.arrowRight} actions |
+					q quit
 				</Text>
 			</Box>
 

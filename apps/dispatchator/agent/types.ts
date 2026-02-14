@@ -1,15 +1,10 @@
 export type Model = "small" | "medium" | "strong";
 export type AgentMode = "default" | "plan";
 
-export interface Agent {
-	id: string;
-	summary: string;
+export interface AgentProcess {
+	workItemId: string;
+	hookStatus: string;
 	title: string;
-	status: string;
-	model: Model;
-	thinking: boolean;
-	agentMode: AgentMode;
-	workflow: string;
 }
 
 export type Action = "kill" | "done";

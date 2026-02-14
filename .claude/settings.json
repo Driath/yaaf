@@ -12,6 +12,10 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-user-prompt-submit.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
           }
         ]
       }
@@ -22,6 +26,10 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-stop.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
           }
         ]
       }
@@ -32,6 +40,74 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-permission-request.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-pre-tool-use.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
           }
         ]
       }
@@ -42,6 +118,10 @@
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-session-end.sh"
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/apps/dispatchator/shell/on-notification.sh"
           }
         ]
       }

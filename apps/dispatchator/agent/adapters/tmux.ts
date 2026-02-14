@@ -46,7 +46,7 @@ export function getRunningAgents(): string[] {
 		.toString()
 		.trim()
 		.split("\n")
-		.filter((w) => w && w !== "bash");
+		.filter((w) => w && w !== "bash" && w !== "zsh");
 }
 
 const MODEL_MAP: Record<Model, string> = {
@@ -144,7 +144,10 @@ export function getWindowTitles(): Map<string, string> {
 	if (result.status !== 0) return new Map();
 	const titles = new Map<string, string>();
 	for (const line of result.stdout.toString().trim().split("\n")) {
-		const [name, title] = line.split(":");
+		const sep = line.indexOf(":");
+		if (sep === -1) continue;
+		const name = line.slice(0, sep);
+		const title = line.slice(sep + 1);
 		if (name && title && name !== "zsh" && name !== "bash") {
 			titles.set(name, title);
 		}
