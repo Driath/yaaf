@@ -1,16 +1,26 @@
-import { slotsAvailable$ } from "../agent/events/slots";
-import { fs$ } from "../agent/sources/fs";
-import { tmux$ } from "../agent/sources/tmux";
+import { useEffect } from "react";
+import { Subject, takeUntil } from "rxjs";
 import { getConfig } from "../config";
-import { createJiraSource$ } from "../work-item/sources/jira";
+import { useStore } from "../store";
+import { getWorkItems$ } from "../work-item/sources";
+import { newItems } from "../work-item/sources/operators/new-items";
 
 const config = getConfig();
+const workItems$ = getWorkItems$(config);
 
-export const sources = {
-	fs$,
-	tmux$,
-	slotsAvailable$,
-	jira$: config.workItems
-		.filter((s) => s.provider === "jira")
-		.map((s) => createJiraSource$(s)),
-};
+export function useSources() {
+	const { addAgent } = useStore();
+
+	useEffect(() => {
+		const destroy$ = new Subject<void>();
+
+		workItems$
+			.pipe(newItems, takeUntil(destroy$))
+			.subscribe((item) => addAgent(item));
+
+		return () => {
+			destroy$.next();
+			destroy$.complete();
+		};
+	}, [addAgent]);
+}

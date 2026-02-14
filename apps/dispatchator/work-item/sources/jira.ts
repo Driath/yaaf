@@ -1,14 +1,12 @@
 import {
-	filter,
-	interval,
+	distinctUntilChanged,
 	type Observable,
 	share,
-	startWith,
 	switchMap,
+	timer,
 } from "rxjs";
 import { getConfig, type WorkItemSourceConfig } from "../../config";
-import { useStore } from "../../store";
-import { buildDoneJql, createJiraClient } from "../adapters/jira";
+import { createJiraClient } from "../adapters/jira";
 import {
 	hasThinking,
 	parseAgentMode,
@@ -17,22 +15,15 @@ import {
 } from "../labels";
 import type { WorkItem } from "../types";
 
-export interface JiraPollResult {
-	items: WorkItem[];
-	doneIds: string[];
-}
-
 export function createJiraSource$(
 	sourceConfig: WorkItemSourceConfig,
-): Observable<JiraPollResult> {
+): Observable<WorkItem[]> {
 	const config = getConfig();
 	const jiraClient = createJiraClient(sourceConfig.providerConfig);
-	let knownIds = new Set<string>();
 
-	return interval(config.polling.jiraInterval).pipe(
-		startWith(0),
+	return timer(0, config.polling.jiraInterval).pipe(
 		switchMap(async () => {
-			const allItems: WorkItem[] = [];
+			const items: WorkItem[] = [];
 			for (const jql of sourceConfig.queries) {
 				const result =
 					await jiraClient.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
@@ -46,7 +37,7 @@ export function createJiraSource$(
 						labels?: string[];
 					};
 					const labels = fields.labels || [];
-					allItems.push({
+					items.push({
 						id: issue.key,
 						summary: fields.summary || "No summary",
 						model: parseModelFromLabels(labels, config.agents.defaultModel),
@@ -56,29 +47,12 @@ export function createJiraSource$(
 					});
 				}
 			}
-
-			const newItems = allItems.filter((i) => !knownIds.has(i.id));
-			knownIds = new Set(allItems.map((i) => i.id));
-
-			const { agents } = useStore.getState();
-			const activeIds = agents
-				.filter((a) => a.status !== "queued")
-				.map((a) => a.id);
-			let doneIds: string[] = [];
-			if (activeIds.length > 0) {
-				const doneJql = buildDoneJql(sourceConfig.doneColumn, activeIds);
-				const doneResult =
-					await jiraClient.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
-						jql: doneJql,
-						fields: ["key"],
-						maxResults: sourceConfig.maxResults,
-					});
-				doneIds = (doneResult.issues || []).map((i) => i.key);
-			}
-
-			return { items: newItems, doneIds } as JiraPollResult;
+			return items;
 		}),
-		filter(({ items, doneIds }) => items.length > 0 || doneIds.length > 0),
+		distinctUntilChanged(
+			(prev, curr) =>
+				prev.map((i) => i.id).join() === curr.map((i) => i.id).join(),
+		),
 		share(),
 	);
 }

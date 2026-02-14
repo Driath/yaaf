@@ -2,15 +2,13 @@ import type { StateCreator } from "zustand";
 import { getConfig } from "../config";
 import { useLogStore } from "../log/store";
 import type { WorkItem } from "../work-item/types";
-import {
-	focusAgent as focusAgentPane,
-	getActiveAgent,
-	getRunningAgents,
-	killAgent as killAgentPane,
-} from "./adapters/tmux";
+// import {
+// 	focusAgent as focusAgentPane,
+// 	getActiveAgent,
+// 	getRunningAgents,
+// 	killAgent as killAgentPane,
+// } from "./adapters/tmux";
 import type { Agent } from "./types";
-
-const existingAgents = new Set(getRunningAgents());
 
 function log(source: string, action: string, detail?: string) {
 	useLogStore.getState().log({ type: "event", source, action, detail });
@@ -37,13 +35,12 @@ export const createAgentsSlice: StateCreator<
 > = (set, get) => ({
 	maxAgents: getConfig().agents.maxConcurrent,
 	agents: [],
-	activeAgentId: getActiveAgent(),
+	activeAgentId: null,
 
 	addAgent: (item) => {
 		if (get().agents.some((a) => a.id === item.id)) return;
 
-		const alreadyRunning = existingAgents.has(item.id);
-		const status = alreadyRunning ? "working" : "queued";
+		const status = "queued";
 
 		const agent: Agent = {
 			id: item.id,
@@ -79,7 +76,7 @@ export const createAgentsSlice: StateCreator<
 	focusAgent: (id) => {
 		const agent = get().agents.find((a) => a.id === id);
 		if (agent && (agent.status === "working" || agent.status === "waiting")) {
-			focusAgentPane(id);
+			// focusAgentPane(id);
 			set({ activeAgentId: id });
 		}
 	},
@@ -88,9 +85,9 @@ export const createAgentsSlice: StateCreator<
 		const agent = get().agents.find((a) => a.id === id);
 		if (!agent) return;
 
-		if (agent.status === "working" || agent.status === "waiting") {
-			killAgentPane(id);
-		}
+		// if (agent.status === "working" || agent.status === "waiting") {
+		// 	killAgentPane(id);
+		// }
 
 		set((s) => ({
 			agents: s.agents.filter((a) => a.id !== id),
