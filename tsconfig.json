@@ -10,5 +10,5 @@
     "allowSyntheticDefaultImports": true,
     "types": ["bun-types"]
   },
-  "include": ["dispatchator"]
+  "include": ["apps/dispatchator"]
 }

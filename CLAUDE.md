@@ -27,6 +27,40 @@ Actions requiring EXPLICIT confirmation (HITL via AskUserQuestion):
 
 - No unnecessary comments - code should be self-documenting
 
+## TypeScript Architecture
+
+Rules for any TypeScript module (dispatchator, future modules):
+
+- **Clean Architecture layers**: `core/` → `infra/` → `store/` → `components/`
+- **Dependency rule**: inner layers never import outer layers (`core/` has zero external deps)
+- **Interfaces in infra/**: define interfaces next to implementations, core consumes them
+- **No god files**: max ~150 lines per file, split by responsibility
+- **One export per concern**: a file does one thing
+
+```
+module/
+├── core/           # Domain logic, pure functions, types
+│   ├── types.ts
+│   └── rules.ts
+├── infra/          # External integrations (APIs, file system, CLIs)
+│   ├── jira-client.ts
+│   └── jira-client.types.ts
+├── store/          # State management (depends on core + infra)
+│   └── app-store.ts
+└── components/     # UI / Ink components (depends on everything above)
+    └── App.tsx
+```
+
+## Project Structure
+
+- `.claude/skills/` — skill definitions (Markdown)
+- `.agents/` — generic agent skills (non-Claude-specific)
+- `apps/` — TypeScript applications
+  - `dispatchator/` — orchestrator (TypeScript/Ink)
+- `scripts/` — reusable CLI utilities
+- `ia/` — instance-specific runtime state (gitignored)
+- `todos/plans/` — plan-based task management
+
 ## Session Flow
 
 - **Start**: Run `/start` after `/clear` to get task suggestions
