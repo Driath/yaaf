@@ -52,16 +52,20 @@ export function Dashboard() {
 	const attached = agents.length;
 	const queued = workItems.filter((w) => !agentsByWorkItem.has(w.id)).length;
 
-	const overflowCount = layout.overflow.length;
-	const linesPerItem = 1 + overflowCount + (overflowCount > 0 ? 1 : 0);
-	const itemLines = Math.max(workItems.length * linesPerItem, 1);
 	const showHeader = layout.inline.filter((c) => c.label).length > 1;
 	const headerLines = showHeader ? 2 : 0;
 	const statusLines = 2;
-	const logsAvailable = Math.max(
-		0,
-		height - headerLines - itemLines - statusLines,
-	);
+	const overflowCount = layout.overflow.length;
+	const linesPerItem = 1 + overflowCount + (overflowCount > 0 ? 1 : 0);
+	const allItemLines = Math.max(workItems.length * linesPerItem, 1);
+	const fixedLines = headerLines + statusLines;
+	const allFit = allItemLines + fixedLines <= height;
+	const visibleItems = allFit
+		? workItems
+		: workItems.slice(selectedIndex, selectedIndex + 1);
+	const visibleOffset = allFit ? 0 : selectedIndex;
+	const itemLines = allFit ? allItemLines : linesPerItem;
+	const logsAvailable = Math.max(0, height - fixedLines - itemLines);
 
 	useInput((_input, key) => {
 		if (showActions) {
@@ -97,20 +101,23 @@ export function Dashboard() {
 			{workItems.length === 0 ? (
 				<Text dimColor>(no work items)</Text>
 			) : (
-				workItems.map((item, index) => (
-					<WorkItemRow
-						key={item.id}
-						workItem={item}
-						agent={agentsByWorkItem.get(item.id)}
-						isSelected={index === selectedIndex}
-						isActive={item.id === activeWorkItemId}
-						showActions={showActions}
-						actionIndex={actionIndex}
-						actions={actions}
-						layout={layout}
-						width={width}
-					/>
-				))
+				visibleItems.map((item, i) => {
+					const index = visibleOffset + i;
+					return (
+						<WorkItemRow
+							key={item.id}
+							workItem={item}
+							agent={agentsByWorkItem.get(item.id)}
+							isSelected={index === selectedIndex}
+							isActive={item.id === activeWorkItemId}
+							showActions={showActions}
+							actionIndex={actionIndex}
+							actions={actions}
+							layout={layout}
+							width={width}
+						/>
+					);
+				})
 			)}
 
 			<Box marginTop={1}>
