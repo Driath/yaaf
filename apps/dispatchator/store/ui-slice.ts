@@ -1,4 +1,5 @@
 import type { StateCreator } from "zustand";
+import { killAgent } from "../agent/adapters/tmux";
 import type { AgentsSlice } from "../agent/agents-slice";
 import { AGENT_ACTIONS } from "../agent/types";
 import type { WorkItemsSlice } from "../work-item/work-items-slice";
@@ -87,7 +88,7 @@ export const createUiSlice: StateCreator<
 		const action = AGENT_ACTIONS[actionIndex].id;
 
 		if (action === "kill") {
-			detachAgent(item.id);
+			killAgent(item.id);
 			set({ showActions: false });
 		} else if (action === "done") {
 			removeWorkItem(item.id);

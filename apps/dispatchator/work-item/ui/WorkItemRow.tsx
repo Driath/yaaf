@@ -79,14 +79,21 @@ export const WORK_ITEM_COLUMNS: ColumnDef<WorkItemCellCtx>[] = [
 		render: (ctx) => {
 			if (!ctx.agent) return null;
 			const icon = ctx.isActive ? figures.radioOn : figures.radioOff;
+			const isWaiting = ctx.agent.hookStatus === "waiting";
 			const status =
 				STATUS_ICON[ctx.agent.hookStatus] ?? (ctx.agent.hookStatus || "?");
 			return (
 				<Text wrap="truncate-end">
 					<Text color={ctx.isActive ? "green" : "gray"}>{icon}</Text>{" "}
-					<Text dimColor>
-						{status} {ctx.agent.title}
-					</Text>
+					{isWaiting ? (
+						<Text color="yellow" bold>
+							{status} {ctx.agent.title}
+						</Text>
+					) : (
+						<Text dimColor>
+							{status} {ctx.agent.title}
+						</Text>
+					)}
 				</Text>
 			);
 		},

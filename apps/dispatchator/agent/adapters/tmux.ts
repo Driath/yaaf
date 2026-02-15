@@ -89,6 +89,7 @@ export async function spawnAgent(
 	return new Promise((resolve, reject) => {
 		const proc = spawn("tmux", [
 			"new-window",
+			"-d",
 			"-t",
 			AGENTS_SESSION,
 			"-n",
