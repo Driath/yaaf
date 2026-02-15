@@ -1,16 +1,16 @@
-import { filter, from, map, mergeMap, type Observable } from "rxjs";
+import { from, mergeMap, type Observable, pairwise, startWith } from "rxjs";
 import type { WorkItem } from "../../types";
 
 export const completedParents = (source$: Observable<WorkItem[]>) =>
 	source$.pipe(
-		map((items) => {
-			const childParentIds = new Set(
-				items.filter((i) => i.parentId).map((i) => i.parentId as string),
-			);
-			return items.filter(
-				(i) => i.commentCount > 0 && childParentIds.has(i.id),
+		startWith([] as WorkItem[]),
+		pairwise(),
+		mergeMap(([prev, curr]) => {
+			const prevCounts = new Map(prev.map((i) => [i.id, i.commentCount]));
+			return from(
+				curr.filter(
+					(i) => i.commentCount > 0 && (prevCounts.get(i.id) ?? 0) === 0,
+				),
 			);
 		}),
-		filter((items) => items.length > 0),
-		mergeMap((items) => from(items)),
 	);

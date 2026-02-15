@@ -13,7 +13,9 @@
       "mcp__plugin_atlassian_atlassian__transitionJiraIssue",
       "mcp__plugin_atlassian_atlassian__addCommentToJiraIssue",
       "mcp__plugin_atlassian_atlassian__getVisibleJiraProjects",
-      "mcp__plugin_atlassian_atlassian__getJiraProjectIssueTypesMetadata"
+      "mcp__plugin_atlassian_atlassian__getJiraProjectIssueTypesMetadata",
+      "mcp__plugin_atlassian_atlassian__fetch",
+      "mcp__plugin_atlassian_atlassian__search"
     ]
   },
   "hooks": {

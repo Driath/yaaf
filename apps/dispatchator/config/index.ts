@@ -68,7 +68,7 @@ function buildFallbackConfig(): DispatchatorConfig {
 				queries: ['project = KAN AND status = "Agent-Ready" ORDER BY rank ASC'],
 				doneColumn: "Done",
 				maxResults: 50,
-				fields: ["key", "summary", "description", "labels"],
+				fields: ["key", "summary", "description", "labels", "comment"],
 			},
 		],
 		polling: {
