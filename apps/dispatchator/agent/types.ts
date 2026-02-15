@@ -7,10 +7,9 @@ export interface AgentProcess {
 	title: string;
 }
 
-export type AgentAction = "kill" | "done";
+export type AgentAction = "kill";
 export const AGENT_ACTIONS: { id: AgentAction; icon: string }[] = [
-	{ id: "kill", icon: "✘" },
-	{ id: "done", icon: "✔" },
+	{ id: "kill", icon: "A:✘" },
 ];
 
 export interface SpawnOptions {
