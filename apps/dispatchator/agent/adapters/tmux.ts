@@ -46,7 +46,8 @@ export function getAllWindows(): string[] {
 }
 
 export function getRunningAgents(): string[] {
-	return getAllWindows().filter((w) => w !== "bash" && w !== "zsh");
+	const SHELL_NAMES = new Set(["bash", "zsh", "agents"]);
+	return getAllWindows().filter((w) => !SHELL_NAMES.has(w));
 }
 
 const MODEL_MAP: Record<Model, string> = {

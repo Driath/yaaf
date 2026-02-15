@@ -1,13 +1,11 @@
 #!/bin/bash
-# Start dispatchator in tmux
-
 SESSION="yaaf"
+AGENTS_SESSION="yaaf-agents"
 
-# Kill existing session
 tmux kill-session -t $SESSION 2>/dev/null
+tmux kill-session -t $AGENTS_SESSION 2>/dev/null
 
-# Create session with orchestrator
-tmux new-session -d -s $SESSION -n orchestrator "bun start"
+tmux new-session -d -s $AGENTS_SESSION -n agents
+tmux new-session -d -s $SESSION -n orchestrator "bun --watch apps/dispatchator/index.tsx"
 
-# Attach
 tmux attach -t $SESSION

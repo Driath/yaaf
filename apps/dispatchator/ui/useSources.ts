@@ -7,6 +7,7 @@ import { fs$ } from "../agent/sources/fs";
 import { activeChanged } from "../agent/sources/operators/active-changed";
 import { logEvent, logLifecycle } from "../agent/sources/operators/log-event";
 import { orphanWindows } from "../agent/sources/operators/orphan-windows";
+import { staleAgent } from "../agent/sources/operators/stale-agent";
 import { statusChanged } from "../agent/sources/operators/status-changed";
 import { titleChanged } from "../agent/sources/operators/title-changed";
 import { windowAdded } from "../agent/sources/operators/window-added";
@@ -86,6 +87,10 @@ export function useSources() {
 		tmux$
 			.pipe(orphanWindows, logEvent("orphanWindow"), takeUntil(destroy$))
 			.subscribe((windowName) => killAgent(windowName));
+
+		tmux$
+			.pipe(staleAgent, logEvent("staleAgent"), takeUntil(destroy$))
+			.subscribe((agentId) => detachAgent(agentId));
 
 		fs$
 			.pipe(statusChanged, logEvent("statusChanged"), takeUntil(destroy$))

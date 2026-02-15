@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import figures from "figures";
 import { Box, Text, useInput, useStdout } from "ink";
 import { useEffect, useState } from "react";
@@ -52,10 +53,20 @@ export function Dashboard() {
 	const attached = agents.length;
 	const waiting = agents.filter((a) => a.hookStatus === "waiting").length;
 	const queued = workItems.filter((w) => !agentsByWorkItem.has(w.id)).length;
+	const statusFull = `${attached}/${maxAgents} active | ${waiting} waiting | ${queued} queued | ↑↓ nav | enter focus | → actions`;
+	const statusContent = statusFull.slice(0, width - 1);
+	const titleText = `${attached}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
+
+	useEffect(() => {
+		process.stdout.write(`\x1b]2;${titleText}\x07`);
+		if (process.env.TMUX) {
+			spawnSync("tmux", ["rename-window", titleText]);
+		}
+	}, [titleText]);
 
 	const showHeader = layout.inline.filter((c) => c.label).length > 1;
 	const headerLines = showHeader ? 2 : 0;
-	const statusLines = 2;
+	const statusLines = 1;
 	const overflowCount = layout.overflow.length;
 	const linesPerItem = 1 + overflowCount + (overflowCount > 0 ? 1 : 0);
 	const allItemLines = Math.max(workItems.length * linesPerItem, 1);
@@ -86,6 +97,29 @@ export function Dashboard() {
 
 	return (
 		<Box flexDirection="column" width={width} height={height}>
+			<Box flexShrink={0}>
+				<Text backgroundColor="gray" color="white">
+					{" "}
+					<Text
+						color={
+							attached === 0
+								? "red"
+								: attached >= maxAgents
+									? "green"
+									: "yellow"
+						}
+					>
+						{attached}/{maxAgents}
+					</Text>
+					{" active | "}
+					<Text bold={waiting > 0} color={waiting > 0 ? "yellow" : undefined}>
+						{waiting} waiting
+					</Text>
+					{` | ${queued} queued | ↑↓ nav | enter focus | → actions`}
+					{" ".repeat(Math.max(0, width - statusContent.length - 1))}
+				</Text>
+			</Box>
+
 			{layout.inline.filter((c) => c.label).length > 1 && (
 				<>
 					<Box flexShrink={0}>
@@ -134,32 +168,6 @@ export function Dashboard() {
 					)}
 				</>
 			)}
-
-			<Box marginTop={1}>
-				<Text dimColor>
-					<Text
-						color={
-							attached === 0
-								? "red"
-								: attached >= maxAgents
-									? "green"
-									: "yellow"
-						}
-					>
-						{attached}/{maxAgents}
-					</Text>{" "}
-					active |{" "}
-					<Text
-						bold={waiting > 0}
-						color={waiting > 0 ? "yellow" : undefined}
-						dimColor={waiting === 0}
-					>
-						{waiting} waiting
-					</Text>{" "}
-					| {queued} queued | {figures.arrowUp}/{figures.arrowDown} nav | enter
-					focus | {figures.arrowRight} actions
-				</Text>
-			</Box>
 
 			<LogPanel logs={logs} maxLines={logsAvailable} width={width} />
 		</Box>

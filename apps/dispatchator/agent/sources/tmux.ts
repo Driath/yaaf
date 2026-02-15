@@ -1,4 +1,5 @@
 import { from, interval, map, mergeMap, pairwise, startWith } from "rxjs";
+import { useStore } from "../../store";
 import {
 	getActiveAgent,
 	getAllWindows,
@@ -18,7 +19,8 @@ export type TmuxEvent =
 	| { type: "windowAdded"; agentId: string }
 	| { type: "windowRemoved"; agentId: string }
 	| { type: "titleChanged"; agentId: string; title: string }
-	| { type: "orphanWindow"; windowName: string };
+	| { type: "orphanWindow"; windowName: string }
+	| { type: "staleAgent"; agentId: string };
 
 const snapshot$ = interval(2000).pipe(
 	startWith(0),
@@ -68,9 +70,21 @@ export const tmux$ = snapshot$.pipe(
 			}
 		}
 
-		const orphans = curr.allWindowNames.filter((w) => !currRunning.has(w));
-		for (const w of orphans) {
-			events.push({ type: "orphanWindow", windowName: w });
+		if (curr.allWindowNames.length > 1) {
+			const orphans = curr.allWindowNames.filter((w) => !currRunning.has(w));
+			for (const w of orphans) {
+				events.push({ type: "orphanWindow", windowName: w });
+			}
+		}
+
+		const storeAgents = useStore.getState().agents;
+		for (const agent of storeAgents) {
+			if (
+				!currRunning.has(agent.workItemId) &&
+				!prevRunning.has(agent.workItemId)
+			) {
+				events.push({ type: "staleAgent", agentId: agent.workItemId });
+			}
 		}
 
 		return from(events);
