@@ -6,7 +6,11 @@ import { useLogStore } from "../log/store";
 import { LogPanel } from "../log/ui/LogPanel";
 import { useStore } from "../store";
 import { useColumns } from "../work-item/ui/columns";
-import { WORK_ITEM_COLUMNS, WorkItemRow } from "../work-item/ui/WorkItemRow";
+import {
+	type ChildAgent,
+	WORK_ITEM_COLUMNS,
+	WorkItemRow,
+} from "../work-item/ui/WorkItemRow";
 
 function useTerminalSize() {
 	const { stdout } = useStdout();
@@ -54,10 +58,18 @@ function StatusText({
 	);
 }
 
-function AgentCount({ attached, max }: { attached: number; max: number }) {
+function AgentCount({
+	attached,
+	max,
+	queued,
+}: {
+	attached: number;
+	max: number;
+	queued: number;
+}) {
 	const status: Status =
-		max === 0
-			? "error"
+		queued === 0 && attached === 0
+			? "success"
 			: attached === max
 				? "success"
 				: attached === 0
@@ -73,7 +85,7 @@ function WaitingCount({ waiting, total }: { waiting: number; total: number }) {
 }
 
 function QueueCount({ queued }: { queued: number }) {
-	const status: Status = queued === 0 ? "error" : "success";
+	const status: Status = queued === 0 ? "success" : "warning";
 	return <StatusText status={status}>{`Q:${queued}`}</StatusText>;
 }
 
@@ -99,11 +111,22 @@ export function Dashboard() {
 
 	const layout = useColumns(WORK_ITEM_COLUMNS, width);
 	const agentsByWorkItem = new Map(agents.map((a) => [a.workItemId, a]));
+	const childAgentsByParent = new Map<string, ChildAgent[]>();
+	for (const item of workItems) {
+		if (!item.parentId) continue;
+		const agent = agentsByWorkItem.get(item.id);
+		if (!agent) continue;
+		const list = childAgentsByParent.get(item.parentId) ?? [];
+		list.push({ workItemId: item.id, agent });
+		childAgentsByParent.set(item.parentId, list);
+	}
 	const waiting = agents.filter(
 		(a) => a.hookStatus === "waiting" || a.hookStatus === "idle",
 	).length;
 	const active = agents.length - waiting;
-	const queued = workItems.filter((w) => !agentsByWorkItem.has(w.id)).length;
+	const queued = workItems.filter(
+		(w) => !agentsByWorkItem.has(w.id) && w.commentCount === 0,
+	).length;
 	const titleText = `dispatchator: ${active}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
 
 	useEffect(() => {
@@ -177,6 +200,7 @@ export function Dashboard() {
 								key={item.id}
 								workItem={item}
 								agent={agentsByWorkItem.get(item.id)}
+								childAgents={childAgentsByParent.get(item.id) ?? []}
 								isSelected={index === selectedIndex}
 								isActive={item.id === activeWorkItemId}
 								showActions={showActions}
@@ -198,7 +222,7 @@ export function Dashboard() {
 			{/* <LogPanel logs={logs} maxLines={logsAvailable} width={width} /> */}
 
 			<Box flexShrink={0} width="100%">
-				<AgentCount attached={active} max={maxAgents} />
+				<AgentCount attached={active} max={maxAgents} queued={queued} />
 				<Text>{` | `}</Text>
 				<WaitingCount waiting={waiting} total={agents.length} />
 				<Text>{` | `}</Text>

@@ -17,9 +17,15 @@ const STATUS_ICON: Record<string, string> = {
 	done: figures.tick,
 };
 
+export type ChildAgent = {
+	workItemId: string;
+	agent: AgentProcess;
+};
+
 export type WorkItemCellCtx = {
 	workItem: WorkItem;
 	agent?: AgentProcess;
+	childAgents: ChildAgent[];
 	isSelected: boolean;
 	isActive: boolean;
 };
@@ -77,10 +83,33 @@ export const WORK_ITEM_COLUMNS: ColumnDef<WorkItemCellCtx>[] = [
 		},
 	},
 	{
+		key: "subagents",
+		flex: 1,
+		label: "SA",
+		render: (ctx) => {
+			if (ctx.childAgents.length === 0) return null;
+			return (
+				<Text wrap="truncate-end">
+					{ctx.childAgents.map((ca, i) => {
+						const status =
+							STATUS_ICON[ca.agent.hookStatus] ?? (ca.agent.hookStatus || "?");
+						return (
+							<Text key={ca.workItemId}>
+								{i > 0 && <Text dimColor>, </Text>}
+								<Text dimColor>{ca.workItemId}</Text> <Text>{status}</Text>
+							</Text>
+						);
+					})}
+				</Text>
+			);
+		},
+	},
+	{
 		key: "agent",
 		flex: 1,
 		label: "agent",
 		render: (ctx) => {
+			if (ctx.childAgents.length > 0) return null;
 			if (!ctx.agent) return null;
 			const icon = ctx.isActive ? figures.radioOn : figures.radioOff;
 			const isWaiting =
@@ -108,6 +137,7 @@ export const WORK_ITEM_COLUMNS: ColumnDef<WorkItemCellCtx>[] = [
 interface WorkItemRowProps {
 	workItem: WorkItem;
 	agent?: AgentProcess;
+	childAgents: ChildAgent[];
 	isSelected: boolean;
 	isActive: boolean;
 	showActions: boolean;
@@ -120,6 +150,7 @@ interface WorkItemRowProps {
 export function WorkItemRow({
 	workItem,
 	agent,
+	childAgents,
 	isSelected,
 	isActive,
 	showActions,
@@ -128,7 +159,13 @@ export function WorkItemRow({
 	layout,
 	width,
 }: WorkItemRowProps) {
-	const ctx: WorkItemCellCtx = { workItem, agent, isSelected, isActive };
+	const ctx: WorkItemCellCtx = {
+		workItem,
+		agent,
+		childAgents,
+		isSelected,
+		isActive,
+	};
 	const overflowRows = layout.overflow
 		.map((c) => ({ col: c, content: c.render(ctx) }))
 		.filter((r) => r.content != null);

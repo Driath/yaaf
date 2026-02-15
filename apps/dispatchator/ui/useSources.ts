@@ -36,7 +36,7 @@ const workItems$ = getWorkItems$(config);
 //
 //   workItems$.pipe(newItems)        → addWorkItem
 //   workItems$.pipe(removedItems)    → removeWorkItem + killAgent + clearAgentState
-//   workItems$.pipe(completedParents) → updateHookStatus(done)
+//   workItems$.pipe(completedParents) → killAgent
 //   slotsAvailable$                  → spawnAgent
 //   tmux$.pipe(windowAdded)          → attachAgent + restore snapshot
 //   tmux$.pipe(windowRemoved)        → detachAgent
@@ -74,7 +74,10 @@ export function useSources() {
 
 		workItems$
 			.pipe(completedParents, logEvent("completedParent"), takeUntil(destroy$))
-			.subscribe((item) => updateHookStatus(item.id, "done"));
+			.subscribe((item) => {
+				killAgent(item.id);
+				detachAgent(item.id);
+			});
 
 		slotsAvailable$
 			.pipe(logEvent("slotAvailable"), takeUntil(destroy$))
