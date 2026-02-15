@@ -30,6 +30,9 @@ dispatchator.config.ts
 .tmp/
 
 # Runtime state
-ia/state/
+ia/state/*
+!ia/state/agents/
+ia/state/agents/*
+!ia/state/agents/.gitkeep
 ia/events.log
 ia/render.log
