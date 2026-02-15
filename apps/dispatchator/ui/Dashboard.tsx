@@ -28,6 +28,55 @@ function useTerminalSize() {
 	return size;
 }
 
+type Status = "success" | "warning" | "error";
+const STATUS_COLOR: Record<Status, string> = {
+	success: "green",
+	warning: "yellow",
+	error: "red",
+};
+const STATUS_ICON: Record<Status, string> = {
+	success: figures.tick,
+	warning: figures.warning,
+	error: figures.cross,
+};
+
+function StatusText({
+	status,
+	children,
+}: {
+	status: Status;
+	children: string;
+}) {
+	return (
+		<Text color={STATUS_COLOR[status]}>
+			{STATUS_ICON[status]} {children}
+		</Text>
+	);
+}
+
+function AgentCount({ attached, max }: { attached: number; max: number }) {
+	const status: Status =
+		max === 0
+			? "error"
+			: attached === max
+				? "success"
+				: attached === 0
+					? "error"
+					: "warning";
+	return <StatusText status={status}>{`A:${attached}/${max}`}</StatusText>;
+}
+
+function WaitingCount({ waiting, total }: { waiting: number; total: number }) {
+	const status: Status =
+		waiting === 0 ? "success" : waiting === total ? "error" : "warning";
+	return <StatusText status={status}>{`W:${waiting}`}</StatusText>;
+}
+
+function QueueCount({ queued }: { queued: number }) {
+	const status: Status = queued === 0 ? "error" : "success";
+	return <StatusText status={status}>{`Q:${queued}`}</StatusText>;
+}
+
 export function Dashboard() {
 	const { width, height } = useTerminalSize();
 
@@ -50,12 +99,12 @@ export function Dashboard() {
 
 	const layout = useColumns(WORK_ITEM_COLUMNS, width);
 	const agentsByWorkItem = new Map(agents.map((a) => [a.workItemId, a]));
-	const attached = agents.length;
-	const waiting = agents.filter((a) => a.hookStatus === "waiting").length;
+	const waiting = agents.filter(
+		(a) => a.hookStatus === "waiting" || a.hookStatus === "idle",
+	).length;
+	const active = agents.length - waiting;
 	const queued = workItems.filter((w) => !agentsByWorkItem.has(w.id)).length;
-	const statusFull = `${attached}/${maxAgents} active | ${waiting} waiting | ${queued} queued | ↑↓ nav | enter focus | → actions`;
-	const statusContent = statusFull.slice(0, width - 1);
-	const titleText = `dispatchator: ${attached}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
+	const titleText = `dispatchator: ${active}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
 
 	useEffect(() => {
 		process.stdout.write(`\x1b]0;${titleText}\x07`);
@@ -97,12 +146,6 @@ export function Dashboard() {
 
 	return (
 		<Box flexDirection="column" width={width} height={height}>
-			<Box flexShrink={0} width={width} overflow="hidden">
-				<Text backgroundColor="gray" color="white" wrap="truncate-end">
-					{` ${statusContent}${" ".repeat(Math.max(0, width - statusContent.length - 1))}`}
-				</Text>
-			</Box>
-
 			{layout.inline.filter((c) => c.label).length > 1 && (
 				<>
 					<Box flexShrink={0}>
@@ -153,6 +196,14 @@ export function Dashboard() {
 			)}
 
 			{/* <LogPanel logs={logs} maxLines={logsAvailable} width={width} /> */}
+
+			<Box flexShrink={0} width="100%">
+				<AgentCount attached={active} max={maxAgents} />
+				<Text>{` | `}</Text>
+				<WaitingCount waiting={waiting} total={agents.length} />
+				<Text>{` | `}</Text>
+				<QueueCount queued={queued} />
+			</Box>
 		</Box>
 	);
 }

@@ -11,7 +11,10 @@ function check(): SlotsPayload | null {
 	const s = useStore.getState();
 	const attachedIds = new Set(s.agents.map((a) => a.workItemId));
 	const queued = s.workItems.filter((w) => !attachedIds.has(w.id));
-	const slots = s.maxAgents - s.agents.length;
+	const activeAgents = s.agents.filter(
+		(a) => a.hookStatus !== "waiting" && a.hookStatus !== "idle",
+	);
+	const slots = s.maxAgents - activeAgents.length;
 	if (slots > 0 && queued.length > 0) {
 		return { workItem: queued[0], slots };
 	}

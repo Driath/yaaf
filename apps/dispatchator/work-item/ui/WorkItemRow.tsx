@@ -13,7 +13,7 @@ const MODEL_ICON: Record<string, string> = {
 const STATUS_ICON: Record<string, string> = {
 	working: figures.play,
 	waiting: "?",
-	idle: figures.tick,
+	idle: "?",
 };
 
 export type WorkItemCellCtx = {
@@ -79,7 +79,8 @@ export const WORK_ITEM_COLUMNS: ColumnDef<WorkItemCellCtx>[] = [
 		render: (ctx) => {
 			if (!ctx.agent) return null;
 			const icon = ctx.isActive ? figures.radioOn : figures.radioOff;
-			const isWaiting = ctx.agent.hookStatus === "waiting";
+			const isWaiting =
+				ctx.agent.hookStatus === "waiting" || ctx.agent.hookStatus === "idle";
 			const status =
 				STATUS_ICON[ctx.agent.hookStatus] ?? (ctx.agent.hookStatus || "?");
 			return (
