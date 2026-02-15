@@ -1,11 +1,13 @@
-import { filter, map, type OperatorFunction } from "rxjs";
-import type { TmuxEvent } from "../tmux";
+import { from, mergeMap, type OperatorFunction } from "rxjs";
+import type { TmuxPair } from "../tmux";
 
-export const orphanWindows: OperatorFunction<TmuxEvent, number> = (source$) =>
+export const orphanWindows: OperatorFunction<TmuxPair, number> = (source$) =>
 	source$.pipe(
-		filter(
-			(e): e is Extract<TmuxEvent, { type: "orphanWindow" }> =>
-				e.type === "orphanWindow",
+		mergeMap(([, curr]) =>
+			from(
+				curr.entries
+					.filter((e) => e.index !== 0 && !e.agentId)
+					.map((e) => e.index),
+			),
 		),
-		map((e) => e.windowIndex),
 	);

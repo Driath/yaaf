@@ -93,21 +93,26 @@ IF new agent context (Task spawn with custom model/agent):
 
 This prevents cascading retrospectives while ensuring each independent agent session learns from its execution.
 
-### 3. Project Context Loading
+### 3. Project Path Resolution
 
-Workflows that receive a `projectName` input MUST load project-specific overrides if they exist:
+Workflows that receive a `projectName` (from `IA:PROJECT:*` label) MUST resolve the project path before any file operations:
 
 ```
-.claude/skills/{workflowName}/references/projects/{projectName}.md
+1. Resolve symlink: readlink projects/{projectName} → absolute path (e.g., /Users/.../Projects/degradation)
+2. Use the ABSOLUTE PATH for all file operations (Read, Glob, Grep, Write, Edit)
+3. NEVER use Bash to read files — always use dedicated tools with absolute paths
 ```
 
-This file contains project-specific requirements (test strategy, conventions, etc.) that override or extend the workflow's default behavior.
+The `projects/` directory contains symlinks to external codebases. Agents work on these projects using their absolute paths.
+
+**Project-specific overrides** (optional): if `.claude/skills/{workflowName}/references/projects/{projectName}.md` exists, load it for project-specific requirements.
 
 **Example:**
 ```
-workflow:work-item-to-code-plan receives projectName="degradation"
-→ Loads .claude/skills/workflow:work-item-to-code-plan/references/projects/degradation.md
-→ Plan must include E2E scenarios as specified
+projectName="degradation"
+→ readlink projects/degradation → /Users/me/Projects/degradation
+→ Glob("/Users/me/Projects/degradation/**/*.ts") to find files
+→ Read("/Users/me/Projects/degradation/package.json") to read config
 ```
 
 ### 4. HITL Gates

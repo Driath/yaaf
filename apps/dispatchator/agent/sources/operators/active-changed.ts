@@ -1,13 +1,10 @@
 import { filter, map, type OperatorFunction } from "rxjs";
-import type { TmuxEvent } from "../tmux";
+import type { TmuxPair } from "../tmux";
 
-export const activeChanged: OperatorFunction<TmuxEvent, string | null> = (
+export const activeChanged: OperatorFunction<TmuxPair, string | null> = (
 	source$,
 ) =>
 	source$.pipe(
-		filter(
-			(e): e is Extract<TmuxEvent, { type: "activeChanged" }> =>
-				e.type === "activeChanged",
-		),
-		map((e) => e.agentId),
+		filter(([prev, curr]) => prev.activeAgentId !== curr.activeAgentId),
+		map(([, curr]) => curr.activeAgentId),
 	);
