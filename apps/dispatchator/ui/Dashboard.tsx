@@ -136,9 +136,19 @@ export function Dashboard() {
 
 			<Box marginTop={1}>
 				<Text dimColor>
-					{attached}/{maxAgents} active | {queued} queued | {figures.arrowUp}/
-					{figures.arrowDown} nav | enter focus | {figures.arrowRight} actions |
-					q quit
+					<Text
+						color={
+							attached === 0
+								? "red"
+								: attached >= maxAgents
+									? "green"
+									: "yellow"
+						}
+					>
+						{attached}/{maxAgents}
+					</Text>{" "}
+					active | {queued} queued | {figures.arrowUp}/{figures.arrowDown} nav |
+					enter focus | {figures.arrowRight} actions
 				</Text>
 			</Box>
 

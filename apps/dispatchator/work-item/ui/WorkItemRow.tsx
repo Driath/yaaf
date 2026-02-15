@@ -158,7 +158,9 @@ export function WorkItemRow({
 			</Box>
 			{overflowRows.map((r, i) => {
 				const prefix = i === overflowRows.length - 1 ? "   └─ " : "   ├─ ";
-				const label = r.col.label ? `${r.col.label}: ` : "";
+				const label = r.col.label
+					? `${r.col.label.charAt(0).toUpperCase()}: `
+					: "";
 				const prefixWidth = prefix.length + label.length;
 				return (
 					<Box key={r.col.key}>

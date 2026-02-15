@@ -7,7 +7,7 @@ function App() {
 	const { exit } = useApp();
 
 	useInput((input, key) => {
-		if (input === "q" || (key.ctrl && input === "c")) {
+		if (key.ctrl && input === "c") {
 			exit();
 		}
 	});
