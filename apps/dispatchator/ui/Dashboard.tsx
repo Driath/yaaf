@@ -1,14 +1,34 @@
 import figures from "figures";
 import { Box, Text, useInput, useStdout } from "ink";
+import { useEffect, useState } from "react";
 import { useLogStore } from "../log/store";
 import { LogPanel } from "../log/ui/LogPanel";
 import { useStore } from "../store";
-import { WorkItemRow } from "../work-item/ui/WorkItemRow";
+import { useColumns } from "../work-item/ui/columns";
+import { WORK_ITEM_COLUMNS, WorkItemRow } from "../work-item/ui/WorkItemRow";
+
+function useTerminalSize() {
+	const { stdout } = useStdout();
+	const [size, setSize] = useState({
+		width: stdout?.columns || 80,
+		height: stdout?.rows || 24,
+	});
+
+	useEffect(() => {
+		if (!stdout) return;
+		const onResize = () =>
+			setSize({ width: stdout.columns, height: stdout.rows });
+		stdout.on("resize", onResize);
+		return () => {
+			stdout.off("resize", onResize);
+		};
+	}, [stdout]);
+
+	return size;
+}
 
 export function Dashboard() {
-	const { stdout } = useStdout();
-	const width = stdout?.columns || 80;
-	const height = stdout?.rows || 24;
+	const { width, height } = useTerminalSize();
 
 	const workItems = useStore((s) => s.workItems);
 	const agents = useStore((s) => s.agents);
@@ -27,13 +47,21 @@ export function Dashboard() {
 	const executeAction = useStore((s) => s.executeAction);
 	const actions = useStore((s) => s.getActions());
 
+	const layout = useColumns(WORK_ITEM_COLUMNS, width);
 	const agentsByWorkItem = new Map(agents.map((a) => [a.workItemId, a]));
 	const attached = agents.length;
 	const queued = workItems.filter((w) => !agentsByWorkItem.has(w.id)).length;
 
-	const itemLines = Math.max(workItems.length, 1);
-	const logsAvailable = Math.max(0, height - 3 - itemLines - 2 - 1);
-	const visibleLogs = logs.slice(-logsAvailable);
+	const overflowCount = layout.overflow.length;
+	const linesPerItem = 1 + overflowCount + (overflowCount > 0 ? 1 : 0);
+	const itemLines = Math.max(workItems.length * linesPerItem, 1);
+	const showHeader = layout.inline.filter((c) => c.label).length > 1;
+	const headerLines = showHeader ? 2 : 0;
+	const statusLines = 2;
+	const logsAvailable = Math.max(
+		0,
+		height - headerLines - itemLines - statusLines,
+	);
 
 	useInput((_input, key) => {
 		if (showActions) {
@@ -51,21 +79,20 @@ export function Dashboard() {
 
 	return (
 		<Box flexDirection="column" width={width} height={height}>
-			<Box>
-				<Box width={36}>
-					<Text dimColor>{"      workitem"}</Text>
-				</Box>
-				<Box width={24}>
-					<Text dimColor>workflow</Text>
-				</Box>
-				<Box width={9}>
-					<Text dimColor>opts</Text>
-				</Box>
-				<Box flexGrow={1} marginLeft={1}>
-					<Text dimColor>agent</Text>
-				</Box>
-			</Box>
-			<Text dimColor>{"─".repeat(width - 2)}</Text>
+			{layout.inline.filter((c) => c.label).length > 1 && (
+				<>
+					<Box flexShrink={0}>
+						{layout.inline.map((c) => (
+							<Box key={c.key} width={c.width}>
+								<Text dimColor>{c.label ?? ""}</Text>
+							</Box>
+						))}
+					</Box>
+					<Box flexShrink={0}>
+						<Text dimColor>{"─".repeat(width - 2)}</Text>
+					</Box>
+				</>
+			)}
 
 			{workItems.length === 0 ? (
 				<Text dimColor>(no work items)</Text>
@@ -80,6 +107,8 @@ export function Dashboard() {
 						showActions={showActions}
 						actionIndex={actionIndex}
 						actions={actions}
+						layout={layout}
+						width={width}
 					/>
 				))
 			)}
@@ -92,7 +121,7 @@ export function Dashboard() {
 				</Text>
 			</Box>
 
-			<LogPanel logs={visibleLogs} />
+			<LogPanel logs={logs} maxLines={logsAvailable} width={width} />
 		</Box>
 	);
 }

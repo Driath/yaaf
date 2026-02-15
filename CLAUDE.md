@@ -61,6 +61,14 @@ module/
 - `ia/` — instance-specific runtime state (gitignored)
 - `todos/plans/` — plan-based task management
 
+## Debugging Dispatchator UI
+
+The orchestrator runs in tmux session `4`, window `0`. Capture the rendered UI with:
+
+```bash
+tmux capture-pane -t 4:0 -p
+```
+
 ## Session Flow
 
 - **Start**: Run `/start` after `/clear` to get task suggestions

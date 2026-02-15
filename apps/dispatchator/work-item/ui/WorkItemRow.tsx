@@ -2,11 +2,12 @@ import figures from "figures";
 import { Box, Text } from "ink";
 import type { AgentProcess } from "../../agent/types";
 import type { WorkItem } from "../types";
+import type { ColumnDef, ColumnLayout } from "./columns";
 
 const MODEL_ICON: Record<string, string> = {
-	small: "★   ",
-	medium: "★★  ",
-	strong: "★★★ ",
+	small: "★",
+	medium: "★★",
+	strong: "★★★",
 };
 
 const STATUS_ICON: Record<string, string> = {
@@ -14,6 +15,83 @@ const STATUS_ICON: Record<string, string> = {
 	waiting: "?",
 	idle: figures.tick,
 };
+
+export type WorkItemCellCtx = {
+	workItem: WorkItem;
+	agent?: AgentProcess;
+	isSelected: boolean;
+	isActive: boolean;
+};
+
+export const WORK_ITEM_COLUMNS: ColumnDef<WorkItemCellCtx>[] = [
+	{
+		key: "pointer",
+		width: 3,
+		render: (ctx) => (
+			<Text color="cyan">{ctx.isSelected ? figures.pointer : " "}</Text>
+		),
+	},
+	{
+		key: "workitem",
+		width: 30,
+		label: "workitem",
+		render: (ctx) => (
+			<Text wrap="truncate-end">
+				<Text bold>{ctx.workItem.id}</Text>
+				{` - ${ctx.workItem.summary}`}
+			</Text>
+		),
+	},
+	{
+		key: "workflow",
+		width: 24,
+		label: "workflow",
+		render: (ctx) => (
+			<Text dimColor wrap="truncate-end">
+				{ctx.workItem.workflow}
+			</Text>
+		),
+	},
+	{
+		key: "opts",
+		width: 9,
+		label: "opts",
+		render: (ctx) => {
+			const flags = [
+				ctx.workItem.thinking ? "T" : "",
+				ctx.workItem.agentMode === "plan" ? "P" : "",
+			]
+				.filter(Boolean)
+				.join("");
+			return (
+				<Text dimColor>
+					{MODEL_ICON[ctx.workItem.model]}
+					{flags && ` `}
+					{flags && <Text color="yellow">{flags}</Text>}
+				</Text>
+			);
+		},
+	},
+	{
+		key: "agent",
+		flex: 1,
+		label: "agent",
+		render: (ctx) => {
+			if (!ctx.agent) return null;
+			const icon = ctx.isActive ? figures.radioOn : figures.radioOff;
+			const status =
+				STATUS_ICON[ctx.agent.hookStatus] ?? (ctx.agent.hookStatus || "?");
+			return (
+				<Text wrap="truncate-end">
+					<Text color={ctx.isActive ? "green" : "gray"}>{icon}</Text>{" "}
+					<Text dimColor>
+						{status} {ctx.agent.title}
+					</Text>
+				</Text>
+			);
+		},
+	},
+];
 
 interface WorkItemRowProps {
 	workItem: WorkItem;
@@ -23,6 +101,8 @@ interface WorkItemRowProps {
 	showActions: boolean;
 	actionIndex: number;
 	actions: { id: string; icon: string }[];
+	layout: ColumnLayout<WorkItemCellCtx>;
+	width: number;
 }
 
 export function WorkItemRow({
@@ -33,58 +113,58 @@ export function WorkItemRow({
 	showActions,
 	actionIndex,
 	actions,
+	layout,
+	width,
 }: WorkItemRowProps) {
-	const pointer = isSelected ? figures.pointer : " ";
-	const activeIcon = isActive ? figures.radioOn : figures.radioOff;
+	const ctx: WorkItemCellCtx = { workItem, agent, isSelected, isActive };
+	const overflowRows = layout.overflow
+		.map((c) => ({ col: c, content: c.render(ctx) }))
+		.filter((r) => r.content != null);
+
+	const hasChildren = overflowRows.length > 0;
+	let seenContent = false;
 
 	return (
-		<Box>
-			{/* workitem */}
-			<Box width={3}>
-				<Text color="cyan">{pointer}</Text>
+		<Box
+			flexDirection="column"
+			width={width}
+			marginBottom={hasChildren ? 1 : 0}
+		>
+			<Box>
+				{layout.inline.map((c) => {
+					const content = c.render(ctx) ?? <Text dimColor>-</Text>;
+					if (c.key !== "pointer" && hasChildren && !seenContent) {
+						seenContent = true;
+						return (
+							<Box key={c.key} width={c.width}>
+								<Text dimColor>┌ </Text>
+								<Box width={Math.max(1, c.width - 2)}>{content}</Box>
+							</Box>
+						);
+					}
+					return (
+						<Box key={c.key} width={c.width}>
+							{content}
+						</Box>
+					);
+				})}
 			</Box>
-			<Box width={3}>
-				<Text color={isActive ? "green" : "gray"}>{activeIcon}</Text>
-			</Box>
-			<Box width={30}>
-				<Text wrap="truncate-end">
-					<Text bold>{workItem.id}</Text>
-					{` - ${workItem.summary}`}
-				</Text>
-			</Box>
-
-			{/* workflow */}
-			<Box width={24}>
-				<Text dimColor wrap="truncate-end">
-					{workItem.workflow}
-				</Text>
-			</Box>
-
-			{/* opts */}
-			<Box width={5}>
-				<Text dimColor>{MODEL_ICON[workItem.model]}</Text>
-			</Box>
-			<Box width={2}>
-				<Text>{workItem.thinking ? "🧠" : " "}</Text>
-			</Box>
-			<Box width={2}>
-				<Text>{workItem.agentMode === "plan" ? "📋" : " "}</Text>
-			</Box>
-
-			{/* agent */}
-			<Box flexGrow={1} marginLeft={1}>
-				{agent ? (
-					<Text dimColor wrap="truncate-end">
-						{STATUS_ICON[agent.hookStatus] ?? (agent.hookStatus || "?")}{" "}
-						{agent.title}
-					</Text>
-				) : (
-					<Text dimColor>-</Text>
-				)}
-			</Box>
-
+			{overflowRows.map((r, i) => {
+				const prefix = i === overflowRows.length - 1 ? "   └─ " : "   ├─ ";
+				const label = r.col.label ? `${r.col.label}: ` : "";
+				const prefixWidth = prefix.length + label.length;
+				return (
+					<Box key={r.col.key}>
+						<Text dimColor>
+							{prefix}
+							{label}
+						</Text>
+						<Box width={Math.max(1, width - prefixWidth)}>{r.content}</Box>
+					</Box>
+				);
+			})}
 			{isSelected && showActions && (
-				<Box marginLeft={1}>
+				<Box marginLeft={3}>
 					{actions.map((action, i) => (
 						<Text
 							key={action.id}
