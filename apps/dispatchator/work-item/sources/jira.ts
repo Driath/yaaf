@@ -36,6 +36,7 @@ export function createJiraSource$(
 						summary?: string;
 						labels?: string[];
 						parent?: { key?: string };
+						comment?: { total?: number };
 					};
 					const labels = fields.labels || [];
 					items.push({
@@ -46,14 +47,17 @@ export function createJiraSource$(
 						agentMode: parseAgentMode(labels),
 						workflow: parseWorkflow(labels, config.agents.defaultWorkflow),
 						parentId: fields.parent?.key,
+						commentCount: fields.comment?.total ?? 0,
 					});
 				}
 			}
-			return items;
+			const ids = new Set(items.map((i) => i.id));
+			return items.filter((i) => !i.parentId || ids.has(i.parentId));
 		}),
 		distinctUntilChanged(
 			(prev, curr) =>
-				prev.map((i) => i.id).join() === curr.map((i) => i.id).join(),
+				prev.map((i) => `${i.id}:${i.commentCount}`).join() ===
+				curr.map((i) => `${i.id}:${i.commentCount}`).join(),
 		),
 		share(),
 	);
