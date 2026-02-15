@@ -55,7 +55,7 @@ export function Dashboard() {
 	const queued = workItems.filter((w) => !agentsByWorkItem.has(w.id)).length;
 	const statusFull = `${attached}/${maxAgents} active | ${waiting} waiting | ${queued} queued | ↑↓ nav | enter focus | → actions`;
 	const statusContent = statusFull.slice(0, width - 1);
-	const titleText = `${attached}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
+	const titleText = `dispatchator: ${attached}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
 
 	useEffect(() => {
 		process.stdout.write(`\x1b]0;${titleText}\x07`);

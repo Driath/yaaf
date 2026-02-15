@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 import { Subject, takeUntil } from "rxjs";
 import { readInitialSnapshots } from "../agent/adapters/state-watcher";
-import { killAgent, spawnAgent } from "../agent/adapters/tmux";
+import {
+	killAgent,
+	setAgentWindowTitle,
+	spawnAgent,
+} from "../agent/adapters/tmux";
 import { slotsAvailable$ } from "../agent/events/slots";
 import { fs$ } from "../agent/sources/fs";
 import { activeChanged } from "../agent/sources/operators/active-changed";
@@ -98,7 +102,10 @@ export function useSources() {
 
 		fs$
 			.pipe(titleChanged, logEvent("titleChanged"), takeUntil(destroy$))
-			.subscribe(({ agentId, title }) => updateAgentTitle(agentId, title));
+			.subscribe(({ agentId, title }) => {
+				updateAgentTitle(agentId, title);
+				setAgentWindowTitle(agentId, title);
+			});
 
 		return () => {
 			logLifecycle("stop");

@@ -6,7 +6,7 @@ tmux kill-session -t $SESSION 2>/dev/null
 tmux kill-session -t $AGENTS_SESSION 2>/dev/null
 
 tmux set -g set-titles on
-tmux set -g set-titles-string "#{pane_title}"
+tmux set -g set-titles-string "#{window_name}"
 
 tmux new-session -d -s $AGENTS_SESSION -n agents
 tmux set -t $AGENTS_SESSION status off

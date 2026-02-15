@@ -3,6 +3,14 @@ import { getConfig } from "../../config";
 import type { Model, SpawnOptions } from "../types";
 
 const AGENTS_SESSION = "yaaf-agents";
+const SHELL_NAMES = new Set(["bash", "zsh", "agents"]);
+
+interface WindowEntry {
+	index: number;
+	name: string;
+	agentId: string | null;
+	paneTitle: string;
+}
 
 function resolveClaudePath(path: "auto" | string): string {
 	if (path !== "auto") return path;
@@ -20,34 +28,45 @@ function hasAgentsSession(): boolean {
 	return result.status === 0;
 }
 
-function hasAgentWindow(ticketId: string): boolean {
+function parseAgentId(windowName: string): string | null {
+	if (SHELL_NAMES.has(windowName)) return null;
+	const colonIdx = windowName.indexOf(":");
+	return colonIdx === -1 ? windowName : windowName.slice(0, colonIdx);
+}
+
+function listWindowEntries(): WindowEntry[] {
 	const result = spawnSync("tmux", [
 		"list-windows",
 		"-t",
 		AGENTS_SESSION,
 		"-F",
-		"#{window_name}",
+		"#{window_index}\t#{window_name}\t#{pane_title}",
 	]);
-	if (result.status !== 0) return false;
-	const windows = result.stdout.toString().split("\n");
-	return windows.includes(ticketId);
+	if (result.status !== 0) return [];
+	return result.stdout
+		.toString()
+		.trim()
+		.split("\n")
+		.filter(Boolean)
+		.map((line) => {
+			const [idx, name, paneTitle] = line.split("\t");
+			return {
+				index: Number(idx),
+				name,
+				agentId: parseAgentId(name),
+				paneTitle: paneTitle || "",
+			};
+		});
 }
 
 export function getAllWindows(): string[] {
-	const result = spawnSync("tmux", [
-		"list-windows",
-		"-t",
-		AGENTS_SESSION,
-		"-F",
-		"#{window_name}",
-	]);
-	if (result.status !== 0) return [];
-	return result.stdout.toString().trim().split("\n").filter(Boolean);
+	return listWindowEntries().map((w) => w.name);
 }
 
 export function getRunningAgents(): string[] {
-	const SHELL_NAMES = new Set(["bash", "zsh", "agents"]);
-	return getAllWindows().filter((w) => !SHELL_NAMES.has(w));
+	return listWindowEntries()
+		.filter((w) => w.agentId !== null)
+		.map((w) => w.agentId as string);
 }
 
 const MODEL_MAP: Record<Model, string> = {
@@ -83,7 +102,8 @@ export async function spawnAgent(
 		return Promise.resolve(null);
 	}
 
-	if (hasAgentWindow(ticketId)) {
+	const existing = listWindowEntries().find((w) => w.agentId === ticketId);
+	if (existing) {
 		return Promise.resolve(ticketId);
 	}
 
@@ -109,8 +129,21 @@ export async function spawnAgent(
 	});
 }
 
+export function setAgentWindowTitle(ticketId: string, title: string): void {
+	const win = listWindowEntries().find((w) => w.agentId === ticketId);
+	if (!win) return;
+	spawnSync("tmux", [
+		"rename-window",
+		"-t",
+		`${AGENTS_SESSION}:${win.index}`,
+		`${ticketId}: ${title}`,
+	]);
+}
+
 export function focusAgent(ticketId: string): void {
-	spawnSync("tmux", ["select-window", "-t", `${AGENTS_SESSION}:${ticketId}`]);
+	const win = listWindowEntries().find((w) => w.agentId === ticketId);
+	if (!win) return;
+	spawnSync("tmux", ["select-window", "-t", `${AGENTS_SESSION}:${win.index}`]);
 }
 
 export function getActiveAgent(): string | null {
@@ -123,35 +156,25 @@ export function getActiveAgent(): string | null {
 	]);
 	if (result.status !== 0) return null;
 	const name = result.stdout.toString().trim();
-	return name && name !== "bash" ? name : null;
+	return parseAgentId(name);
 }
 
 export function killAgent(ticketId: string): boolean {
+	const win = listWindowEntries().find((w) => w.agentId === ticketId);
+	if (!win) return false;
 	const result = spawnSync("tmux", [
 		"kill-window",
 		"-t",
-		`${AGENTS_SESSION}:${ticketId}`,
+		`${AGENTS_SESSION}:${win.index}`,
 	]);
 	return result.status === 0;
 }
 
 export function getWindowTitles(): Map<string, string> {
-	const result = spawnSync("tmux", [
-		"list-windows",
-		"-t",
-		AGENTS_SESSION,
-		"-F",
-		"#{window_name}:#{pane_title}",
-	]);
-	if (result.status !== 0) return new Map();
 	const titles = new Map<string, string>();
-	for (const line of result.stdout.toString().trim().split("\n")) {
-		const sep = line.indexOf(":");
-		if (sep === -1) continue;
-		const name = line.slice(0, sep);
-		const title = line.slice(sep + 1);
-		if (name && title && name !== "zsh" && name !== "bash") {
-			titles.set(name, title);
+	for (const win of listWindowEntries()) {
+		if (win.agentId && win.paneTitle) {
+			titles.set(win.agentId, win.paneTitle);
 		}
 	}
 	return titles;
