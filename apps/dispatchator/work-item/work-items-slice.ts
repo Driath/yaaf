@@ -1,4 +1,5 @@
 import type { StateCreator } from "zustand";
+import { focusAgent } from "../agent/adapters/tmux";
 import type { AgentsSlice } from "../agent/agents-slice";
 import { useLogStore } from "../log/store";
 import type { UiSlice } from "../store/ui-slice";
@@ -40,7 +41,7 @@ export const createWorkItemsSlice: StateCreator<
 	focusWorkItem: (id) => {
 		const hasAgent = get().agents.some((a) => a.workItemId === id);
 		if (hasAgent) {
-			set({ activeWorkItemId: id });
+			focusAgent(id);
 		}
 	},
 
