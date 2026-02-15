@@ -1,6 +1,13 @@
-import { readdirSync, readFileSync, unlinkSync, watch } from "node:fs";
+import {
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	unlinkSync,
+	watch,
+} from "node:fs";
 
 const AGENTS_STATE_DIR = `${process.cwd()}/ia/state/agents`;
+mkdirSync(AGENTS_STATE_DIR, { recursive: true });
 
 function readFile(filepath: string): string | null {
 	try {

@@ -2,15 +2,14 @@ import { from, interval, map, mergeMap, pairwise, startWith } from "rxjs";
 import { useStore } from "../../store";
 import {
 	getActiveAgent,
-	getAllWindows,
-	getRunningAgents,
+	getWindowEntries,
 	getWindowTitles,
+	type WindowEntry,
 } from "../adapters/tmux";
 
 interface TmuxSnapshot {
 	activeAgentId: string | null;
-	runningIds: string[];
-	allWindowNames: string[];
+	entries: WindowEntry[];
 	titles: Map<string, string>;
 }
 
@@ -19,7 +18,7 @@ export type TmuxEvent =
 	| { type: "windowAdded"; agentId: string }
 	| { type: "windowRemoved"; agentId: string }
 	| { type: "titleChanged"; agentId: string; title: string }
-	| { type: "orphanWindow"; windowName: string }
+	| { type: "orphanWindow"; windowIndex: number }
 	| { type: "staleAgent"; agentId: string };
 
 const snapshot$ = interval(2000).pipe(
@@ -27,8 +26,7 @@ const snapshot$ = interval(2000).pipe(
 	map(
 		(): TmuxSnapshot => ({
 			activeAgentId: getActiveAgent(),
-			runningIds: getRunningAgents(),
-			allWindowNames: getAllWindows(),
+			entries: getWindowEntries(),
 			titles: getWindowTitles(),
 		}),
 	),
@@ -37,8 +35,7 @@ const snapshot$ = interval(2000).pipe(
 export const tmux$ = snapshot$.pipe(
 	startWith({
 		activeAgentId: null,
-		runningIds: [],
-		allWindowNames: [],
+		entries: [],
 		titles: new Map(),
 	} as TmuxSnapshot),
 	pairwise(),
@@ -49,17 +46,21 @@ export const tmux$ = snapshot$.pipe(
 			events.push({ type: "activeChanged", agentId: curr.activeAgentId });
 		}
 
-		const prevRunning = new Set(prev.runningIds);
-		const currRunning = new Set(curr.runningIds);
+		const prevAgentIds = new Set(
+			prev.entries.filter((e) => e.agentId).map((e) => e.agentId as string),
+		);
+		const currAgentIds = new Set(
+			curr.entries.filter((e) => e.agentId).map((e) => e.agentId as string),
+		);
 
-		for (const id of currRunning) {
-			if (!prevRunning.has(id)) {
+		for (const id of currAgentIds) {
+			if (!prevAgentIds.has(id)) {
 				events.push({ type: "windowAdded", agentId: id });
 			}
 		}
 
-		for (const id of prevRunning) {
-			if (!currRunning.has(id)) {
+		for (const id of prevAgentIds) {
+			if (!currAgentIds.has(id)) {
 				events.push({ type: "windowRemoved", agentId: id });
 			}
 		}
@@ -70,18 +71,19 @@ export const tmux$ = snapshot$.pipe(
 			}
 		}
 
-		if (curr.allWindowNames.length > 1) {
-			const orphans = curr.allWindowNames.filter((w) => !currRunning.has(w));
-			for (const w of orphans) {
-				events.push({ type: "orphanWindow", windowName: w });
+		if (curr.entries.length > 1) {
+			for (const entry of curr.entries) {
+				if (!entry.agentId) {
+					events.push({ type: "orphanWindow", windowIndex: entry.index });
+				}
 			}
 		}
 
 		const storeAgents = useStore.getState().agents;
 		for (const agent of storeAgents) {
 			if (
-				!currRunning.has(agent.workItemId) &&
-				!prevRunning.has(agent.workItemId)
+				!currAgentIds.has(agent.workItemId) &&
+				!prevAgentIds.has(agent.workItemId)
 			) {
 				events.push({ type: "staleAgent", agentId: agent.workItemId });
 			}
