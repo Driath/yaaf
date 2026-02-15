@@ -64,7 +64,9 @@ export function Dashboard() {
 		? workItems
 		: workItems.slice(selectedIndex, selectedIndex + 1);
 	const visibleOffset = allFit ? 0 : selectedIndex;
-	const itemLines = allFit ? allItemLines : linesPerItem;
+	const navPrev = !allFit && selectedIndex > 0 ? 1 : 0;
+	const navNext = !allFit && selectedIndex < workItems.length - 1 ? 1 : 0;
+	const itemLines = allFit ? allItemLines : linesPerItem + navPrev + navNext;
 	const logsAvailable = Math.max(0, height - fixedLines - itemLines);
 
 	useInput((_input, key) => {
@@ -101,23 +103,35 @@ export function Dashboard() {
 			{workItems.length === 0 ? (
 				<Text dimColor>(no work items)</Text>
 			) : (
-				visibleItems.map((item, i) => {
-					const index = visibleOffset + i;
-					return (
-						<WorkItemRow
-							key={item.id}
-							workItem={item}
-							agent={agentsByWorkItem.get(item.id)}
-							isSelected={index === selectedIndex}
-							isActive={item.id === activeWorkItemId}
-							showActions={showActions}
-							actionIndex={actionIndex}
-							actions={actions}
-							layout={layout}
-							width={width}
-						/>
-					);
-				})
+				<>
+					{!allFit && selectedIndex > 0 && (
+						<Text dimColor>
+							{figures.arrowUp} {workItems[selectedIndex - 1].id}
+						</Text>
+					)}
+					{visibleItems.map((item, i) => {
+						const index = visibleOffset + i;
+						return (
+							<WorkItemRow
+								key={item.id}
+								workItem={item}
+								agent={agentsByWorkItem.get(item.id)}
+								isSelected={index === selectedIndex}
+								isActive={item.id === activeWorkItemId}
+								showActions={showActions}
+								actionIndex={actionIndex}
+								actions={actions}
+								layout={layout}
+								width={width}
+							/>
+						);
+					})}
+					{!allFit && selectedIndex < workItems.length - 1 && (
+						<Text dimColor>
+							{figures.arrowDown} {workItems[selectedIndex + 1].id}
+						</Text>
+					)}
+				</>
 			)}
 
 			<Box marginTop={1}>
