@@ -14,6 +14,7 @@ const STATUS_ICON: Record<string, string> = {
 	working: figures.play,
 	waiting: "?",
 	idle: "?",
+	done: figures.tick,
 };
 
 export type WorkItemCellCtx = {

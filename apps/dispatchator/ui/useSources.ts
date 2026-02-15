@@ -21,7 +21,9 @@ import { tmux$ } from "../agent/sources/tmux";
 import { getConfig } from "../config";
 import { useStore } from "../store";
 import { getWorkItems$ } from "../work-item/sources";
+import { completedParents } from "../work-item/sources/operators/completed-parents";
 import { newItems } from "../work-item/sources/operators/new-items";
+import { removedItems } from "../work-item/sources/operators/removed-items";
 
 const config = getConfig();
 const workItems$ = getWorkItems$(config);
@@ -33,6 +35,8 @@ const workItems$ = getWorkItems$(config);
 // Adding behavior = new operator + new subscribe line. No new observables.
 //
 //   workItems$.pipe(newItems)        → addWorkItem
+//   workItems$.pipe(removedItems)    → removeWorkItem + killAgent + clearAgentState
+//   workItems$.pipe(completedParents) → updateHookStatus(done)
 //   slotsAvailable$                  → spawnAgent
 //   tmux$.pipe(windowAdded)          → attachAgent + restore snapshot
 //   tmux$.pipe(windowRemoved)        → detachAgent
@@ -44,6 +48,7 @@ const workItems$ = getWorkItems$(config);
 export function useSources() {
 	const {
 		addWorkItem,
+		removeWorkItem,
 		attachAgent,
 		detachAgent,
 		updateHookStatus,
@@ -59,6 +64,17 @@ export function useSources() {
 		workItems$
 			.pipe(newItems, logEvent("newItem"), takeUntil(destroy$))
 			.subscribe((item) => addWorkItem(item));
+
+		workItems$
+			.pipe(removedItems, logEvent("removedItem"), takeUntil(destroy$))
+			.subscribe((item) => {
+				removeWorkItem(item.id);
+				killAgent(item.id);
+			});
+
+		workItems$
+			.pipe(completedParents, logEvent("completedParent"), takeUntil(destroy$))
+			.subscribe((item) => updateHookStatus(item.id, "done"));
 
 		slotsAvailable$
 			.pipe(logEvent("slotAvailable"), takeUntil(destroy$))
@@ -115,6 +131,7 @@ export function useSources() {
 		};
 	}, [
 		addWorkItem,
+		removeWorkItem,
 		attachAgent,
 		detachAgent,
 		updateHookStatus,

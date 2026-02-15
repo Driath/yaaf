@@ -2,7 +2,18 @@
   "permissions": {
     "allow": [
       "Bash(touch ia/state/agents/*)",
-      "Bash(.claude/skills/**/scripts/*)"
+      "Bash(.claude/skills/**/scripts/*)",
+      "mcp__plugin_atlassian_atlassian__atlassianUserInfo",
+      "mcp__plugin_atlassian_atlassian__getAccessibleAtlassianResources",
+      "mcp__plugin_atlassian_atlassian__getJiraIssue",
+      "mcp__plugin_atlassian_atlassian__searchJiraIssuesUsingJql",
+      "mcp__plugin_atlassian_atlassian__createJiraIssue",
+      "mcp__plugin_atlassian_atlassian__editJiraIssue",
+      "mcp__plugin_atlassian_atlassian__getTransitionsForJiraIssue",
+      "mcp__plugin_atlassian_atlassian__transitionJiraIssue",
+      "mcp__plugin_atlassian_atlassian__addCommentToJiraIssue",
+      "mcp__plugin_atlassian_atlassian__getVisibleJiraProjects",
+      "mcp__plugin_atlassian_atlassian__getJiraProjectIssueTypesMetadata"
     ]
   },
   "hooks": {

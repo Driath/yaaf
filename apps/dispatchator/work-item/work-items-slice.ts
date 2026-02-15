@@ -41,6 +41,7 @@ export const createWorkItemsSlice: StateCreator<
 	focusWorkItem: (id) => {
 		const hasAgent = get().agents.some((a) => a.workItemId === id);
 		if (hasAgent) {
+			set({ activeWorkItemId: id });
 			focusAgent(id);
 		}
 	},

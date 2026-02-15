@@ -1,5 +1,4 @@
 import type { StateCreator } from "zustand";
-import { clearAgentState } from "../agent/adapters/state-watcher";
 import { killAgent } from "../agent/adapters/tmux";
 import type { AgentsSlice } from "../agent/agents-slice";
 import { AGENT_ACTIONS } from "../agent/types";
@@ -84,7 +83,6 @@ export const createUiSlice: StateCreator<
 
 		if (action === "kill") {
 			killAgent(item.id);
-			clearAgentState(item.id);
 			set({ showActions: false });
 		}
 	},

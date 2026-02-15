@@ -10,7 +10,9 @@ export interface SlotsPayload {
 function check(): SlotsPayload | null {
 	const s = useStore.getState();
 	const attachedIds = new Set(s.agents.map((a) => a.workItemId));
-	const queued = s.workItems.filter((w) => !attachedIds.has(w.id));
+	const queued = s.workItems.filter(
+		(w) => !attachedIds.has(w.id) && w.commentCount === 0,
+	);
 	const activeAgents = s.agents.filter(
 		(a) => a.hookStatus !== "waiting" && a.hookStatus !== "idle",
 	);

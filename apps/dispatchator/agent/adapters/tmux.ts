@@ -1,6 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { getConfig } from "../../config";
 import type { Model, SpawnOptions } from "../types";
+import { clearAgentState } from "./state-watcher";
 
 const AGENTS_SESSION = "yaaf-agents";
 const AGENT_TAG = "@agent-id";
@@ -174,6 +175,7 @@ export function getActiveAgent(): string | null {
 export function killAgent(ticketId: string): boolean {
 	const win = listWindowEntries().find((w) => w.agentId === ticketId);
 	if (!win) return false;
+	clearAgentState(ticketId);
 	return killWindow(win.index);
 }
 

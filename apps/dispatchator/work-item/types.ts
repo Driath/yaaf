@@ -9,4 +9,5 @@ export interface WorkItem {
 	agentMode: AgentMode;
 	workflow: string;
 	parentId?: string;
+	commentCount: number;
 }
