@@ -97,26 +97,9 @@ export function Dashboard() {
 
 	return (
 		<Box flexDirection="column" width={width} height={height}>
-			<Box flexShrink={0}>
-				<Text backgroundColor="gray" color="white">
-					{" "}
-					<Text
-						color={
-							attached === 0
-								? "red"
-								: attached >= maxAgents
-									? "green"
-									: "yellow"
-						}
-					>
-						{attached}/{maxAgents}
-					</Text>
-					{" active | "}
-					<Text bold={waiting > 0} color={waiting > 0 ? "yellow" : undefined}>
-						{waiting} waiting
-					</Text>
-					{` | ${queued} queued | ↑↓ nav | enter focus | → actions`}
-					{" ".repeat(Math.max(0, width - statusContent.length - 1))}
+			<Box flexShrink={0} width={width} overflow="hidden">
+				<Text backgroundColor="gray" color="white" wrap="truncate-end">
+					{` ${statusContent}${" ".repeat(Math.max(0, width - statusContent.length - 1))}`}
 				</Text>
 			</Box>
 
