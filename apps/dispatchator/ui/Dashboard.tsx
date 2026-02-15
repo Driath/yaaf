@@ -58,7 +58,7 @@ export function Dashboard() {
 	const titleText = `${attached}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
 
 	useEffect(() => {
-		process.stdout.write(`\x1b]2;${titleText}\x07`);
+		process.stdout.write(`\x1b]0;${titleText}\x07`);
 		if (process.env.TMUX) {
 			spawnSync("tmux", ["rename-window", titleText]);
 		}
