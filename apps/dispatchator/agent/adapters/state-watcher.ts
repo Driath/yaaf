@@ -32,6 +32,19 @@ export interface AgentSnapshot {
 	title?: string;
 }
 
+export function clearAgentState(agentId: string): void {
+	try {
+		unlinkSync(`${AGENTS_STATE_DIR}/${agentId}.state`);
+	} catch {
+		/* ignore */
+	}
+	try {
+		unlinkSync(`${AGENTS_STATE_DIR}/${agentId}.title`);
+	} catch {
+		/* ignore */
+	}
+}
+
 export function readInitialSnapshots(): Map<string, AgentSnapshot> {
 	const snapshots = new Map<string, AgentSnapshot>();
 	try {

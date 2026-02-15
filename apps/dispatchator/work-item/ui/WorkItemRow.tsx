@@ -173,13 +173,13 @@ export function WorkItemRow({
 					</Box>
 				);
 			})}
-			{isSelected && showActions && (
+			{isSelected && agent && (
 				<Box marginLeft={3}>
 					{actions.map((action, i) => (
 						<Text
 							key={action.id}
-							color={i === actionIndex ? "cyan" : "gray"}
-							inverse={i === actionIndex}
+							color={showActions && i === actionIndex ? "cyan" : "gray"}
+							inverse={showActions && i === actionIndex}
 						>
 							{" "}
 							{action.icon}{" "}
