@@ -50,6 +50,7 @@ export function Dashboard() {
 	const layout = useColumns(WORK_ITEM_COLUMNS, width);
 	const agentsByWorkItem = new Map(agents.map((a) => [a.workItemId, a]));
 	const attached = agents.length;
+	const waiting = agents.filter((a) => a.hookStatus === "waiting").length;
 	const queued = workItems.filter((w) => !agentsByWorkItem.has(w.id)).length;
 
 	const showHeader = layout.inline.filter((c) => c.label).length > 1;
@@ -147,8 +148,16 @@ export function Dashboard() {
 					>
 						{attached}/{maxAgents}
 					</Text>{" "}
-					active | {queued} queued | {figures.arrowUp}/{figures.arrowDown} nav |
-					enter focus | {figures.arrowRight} actions
+					active |{" "}
+					<Text
+						bold={waiting > 0}
+						color={waiting > 0 ? "yellow" : undefined}
+						dimColor={waiting === 0}
+					>
+						{waiting} waiting
+					</Text>{" "}
+					| {queued} queued | {figures.arrowUp}/{figures.arrowDown} nav | enter
+					focus | {figures.arrowRight} actions
 				</Text>
 			</Box>
 
