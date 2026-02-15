@@ -3,9 +3,9 @@ import { getConfig } from "../../config";
 import type { Model, SpawnOptions } from "../types";
 
 const AGENTS_SESSION = "yaaf-agents";
-const SHELL_NAMES = new Set(["bash", "zsh", "agents"]);
+const AGENT_TAG = "@agent-id";
 
-interface WindowEntry {
+export interface WindowEntry {
 	index: number;
 	name: string;
 	agentId: string | null;
@@ -28,10 +28,17 @@ function hasAgentsSession(): boolean {
 	return result.status === 0;
 }
 
-function parseAgentId(windowName: string): string | null {
-	if (SHELL_NAMES.has(windowName)) return null;
-	const colonIdx = windowName.indexOf(":");
-	return colonIdx === -1 ? windowName : windowName.slice(0, colonIdx);
+function readWindowTag(sessionWindow: string): string | null {
+	const result = spawnSync("tmux", [
+		"show-option",
+		"-wqv",
+		"-t",
+		sessionWindow,
+		AGENT_TAG,
+	]);
+	if (result.status !== 0) return null;
+	const val = result.stdout.toString().trim();
+	return val || null;
 }
 
 function listWindowEntries(): WindowEntry[] {
@@ -50,23 +57,14 @@ function listWindowEntries(): WindowEntry[] {
 		.filter(Boolean)
 		.map((line) => {
 			const [idx, name, paneTitle] = line.split("\t");
-			return {
-				index: Number(idx),
-				name,
-				agentId: parseAgentId(name),
-				paneTitle: paneTitle || "",
-			};
+			const index = Number(idx);
+			const agentId = readWindowTag(`${AGENTS_SESSION}:${index}`);
+			return { index, name, agentId, paneTitle: paneTitle || "" };
 		});
 }
 
-export function getAllWindows(): string[] {
-	return listWindowEntries().map((w) => w.name);
-}
-
-export function getRunningAgents(): string[] {
-	return listWindowEntries()
-		.filter((w) => w.agentId !== null)
-		.map((w) => w.agentId as string);
+export function getWindowEntries(): WindowEntry[] {
+	return listWindowEntries();
 }
 
 const MODEL_MAP: Record<Model, string> = {
@@ -120,6 +118,7 @@ export async function spawnAgent(
 
 		proc.on("close", (code) => {
 			if (code === 0) {
+				tagWindow(ticketId);
 				resolve(ticketId);
 			} else {
 				reject(new Error(`tmux new-window exited with code ${code}`));
@@ -127,6 +126,19 @@ export async function spawnAgent(
 		});
 		proc.on("error", reject);
 	});
+}
+
+function tagWindow(ticketId: string): void {
+	const win = listWindowEntries().find((w) => w.name === ticketId);
+	if (!win) return;
+	spawnSync("tmux", [
+		"set-option",
+		"-w",
+		"-t",
+		`${AGENTS_SESSION}:${win.index}`,
+		AGENT_TAG,
+		ticketId,
+	]);
 }
 
 export function setAgentWindowTitle(ticketId: string, title: string): void {
@@ -152,20 +164,24 @@ export function getActiveAgent(): string | null {
 		"-t",
 		AGENTS_SESSION,
 		"-p",
-		"#{window_name}",
+		"#{window_index}",
 	]);
 	if (result.status !== 0) return null;
-	const name = result.stdout.toString().trim();
-	return parseAgentId(name);
+	const index = Number(result.stdout.toString().trim());
+	return readWindowTag(`${AGENTS_SESSION}:${index}`);
 }
 
 export function killAgent(ticketId: string): boolean {
 	const win = listWindowEntries().find((w) => w.agentId === ticketId);
 	if (!win) return false;
+	return killWindow(win.index);
+}
+
+export function killWindow(windowIndex: number): boolean {
 	const result = spawnSync("tmux", [
 		"kill-window",
 		"-t",
-		`${AGENTS_SESSION}:${win.index}`,
+		`${AGENTS_SESSION}:${windowIndex}`,
 	]);
 	return result.status === 0;
 }

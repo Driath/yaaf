@@ -3,6 +3,7 @@ import { Subject, takeUntil } from "rxjs";
 import { readInitialSnapshots } from "../agent/adapters/state-watcher";
 import {
 	killAgent,
+	killWindow,
 	setAgentWindowTitle,
 	spawnAgent,
 } from "../agent/adapters/tmux";
@@ -90,7 +91,7 @@ export function useSources() {
 
 		tmux$
 			.pipe(orphanWindows, logEvent("orphanWindow"), takeUntil(destroy$))
-			.subscribe((windowName) => killAgent(windowName));
+			.subscribe((windowIndex) => killWindow(windowIndex));
 
 		tmux$
 			.pipe(staleAgent, logEvent("staleAgent"), takeUntil(destroy$))
