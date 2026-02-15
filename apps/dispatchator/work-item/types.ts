@@ -8,4 +8,5 @@ export interface WorkItem {
 	thinking: boolean;
 	agentMode: AgentMode;
 	workflow: string;
+	parentId?: string;
 }

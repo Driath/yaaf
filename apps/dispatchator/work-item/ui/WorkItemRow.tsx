@@ -37,6 +37,9 @@ export const WORK_ITEM_COLUMNS: ColumnDef<WorkItemCellCtx>[] = [
 		label: "workitem",
 		render: (ctx) => (
 			<Text wrap="truncate-end">
+				{ctx.workItem.parentId && (
+					<Text dimColor>{ctx.workItem.parentId}→</Text>
+				)}
 				<Text bold>{ctx.workItem.id}</Text>
 				{` - ${ctx.workItem.summary}`}
 			</Text>
