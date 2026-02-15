@@ -19,6 +19,9 @@ node_modules/
 !.claude/skills/**/scripts/
 !todos/plans/
 
+# External projects (symlinks)
+projects/
+
 # Dispatchator user config
 dispatchator.config.ts
 

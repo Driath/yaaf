@@ -1,11 +1,10 @@
-import { filter, map, type OperatorFunction } from "rxjs";
-import type { TmuxEvent } from "../tmux";
+import { from, mergeMap, type OperatorFunction } from "rxjs";
+import { agentIds, type TmuxPair } from "../tmux";
 
-export const windowRemoved: OperatorFunction<TmuxEvent, string> = (source$) =>
+export const windowRemoved: OperatorFunction<TmuxPair, string> = (source$) =>
 	source$.pipe(
-		filter(
-			(e): e is Extract<TmuxEvent, { type: "windowRemoved" }> =>
-				e.type === "windowRemoved",
-		),
-		map((e) => e.agentId),
+		mergeMap(([prev, curr]) => {
+			const currIds = agentIds(curr);
+			return from([...agentIds(prev)].filter((id) => !currIds.has(id)));
+		}),
 	);
