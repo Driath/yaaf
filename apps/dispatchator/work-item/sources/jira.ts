@@ -28,13 +28,14 @@ export function createJiraSource$(
 				const result =
 					await jiraClient.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
 						jql,
-						fields: sourceConfig.fields,
+						fields: [...sourceConfig.fields, "*navigable"],
 						maxResults: sourceConfig.maxResults,
 					});
 				for (const issue of result.issues || []) {
 					const fields = issue.fields as {
 						summary?: string;
 						labels?: string[];
+						parent?: { key?: string };
 					};
 					const labels = fields.labels || [];
 					items.push({
@@ -44,6 +45,7 @@ export function createJiraSource$(
 						thinking: hasThinking(labels),
 						agentMode: parseAgentMode(labels),
 						workflow: parseWorkflow(labels, config.agents.defaultWorkflow),
+						parentId: fields.parent?.key,
 					});
 				}
 			}
