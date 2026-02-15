@@ -33,7 +33,7 @@ function hasAgentWindow(ticketId: string): boolean {
 	return windows.includes(ticketId);
 }
 
-export function getRunningAgents(): string[] {
+export function getAllWindows(): string[] {
 	const result = spawnSync("tmux", [
 		"list-windows",
 		"-t",
@@ -42,11 +42,11 @@ export function getRunningAgents(): string[] {
 		"#{window_name}",
 	]);
 	if (result.status !== 0) return [];
-	return result.stdout
-		.toString()
-		.trim()
-		.split("\n")
-		.filter((w) => w && w !== "bash" && w !== "zsh");
+	return result.stdout.toString().trim().split("\n").filter(Boolean);
+}
+
+export function getRunningAgents(): string[] {
+	return getAllWindows().filter((w) => w !== "bash" && w !== "zsh");
 }
 
 const MODEL_MAP: Record<Model, string> = {

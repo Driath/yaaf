@@ -5,6 +5,7 @@
   "scripts": {
     "start:orchestrator": "bun apps/dispatchator/index.tsx",
     "dev:orchestrator": "bun --watch apps/dispatchator/index.tsx",
+    "debug:orchestrator": "INK_DEBUG=ia/render.log bun --watch apps/dispatchator/index.tsx",
     "start:agents": "tmux kill-session -t yaaf-agents 2>/dev/null; tmux new-session -s yaaf-agents",
     "cleanup": "./scripts/cleanup.sh",
     "dispatchator:typecheck": "tsc",

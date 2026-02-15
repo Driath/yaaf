@@ -1,6 +1,7 @@
 import { from, interval, map, mergeMap, pairwise, startWith } from "rxjs";
 import {
 	getActiveAgent,
+	getAllWindows,
 	getRunningAgents,
 	getWindowTitles,
 } from "../adapters/tmux";
@@ -8,6 +9,7 @@ import {
 interface TmuxSnapshot {
 	activeAgentId: string | null;
 	runningIds: string[];
+	allWindowNames: string[];
 	titles: Map<string, string>;
 }
 
@@ -15,7 +17,8 @@ export type TmuxEvent =
 	| { type: "activeChanged"; agentId: string | null }
 	| { type: "windowAdded"; agentId: string }
 	| { type: "windowRemoved"; agentId: string }
-	| { type: "titleChanged"; agentId: string; title: string };
+	| { type: "titleChanged"; agentId: string; title: string }
+	| { type: "orphanWindow"; windowName: string };
 
 const snapshot$ = interval(2000).pipe(
 	startWith(0),
@@ -23,6 +26,7 @@ const snapshot$ = interval(2000).pipe(
 		(): TmuxSnapshot => ({
 			activeAgentId: getActiveAgent(),
 			runningIds: getRunningAgents(),
+			allWindowNames: getAllWindows(),
 			titles: getWindowTitles(),
 		}),
 	),
@@ -32,6 +36,7 @@ export const tmux$ = snapshot$.pipe(
 	startWith({
 		activeAgentId: null,
 		runningIds: [],
+		allWindowNames: [],
 		titles: new Map(),
 	} as TmuxSnapshot),
 	pairwise(),
@@ -61,6 +66,11 @@ export const tmux$ = snapshot$.pipe(
 			if (prev.titles.get(id) !== title) {
 				events.push({ type: "titleChanged", agentId: id, title });
 			}
+		}
+
+		const orphans = curr.allWindowNames.filter((w) => !currRunning.has(w));
+		for (const w of orphans) {
+			events.push({ type: "orphanWindow", windowName: w });
 		}
 
 		return from(events);
