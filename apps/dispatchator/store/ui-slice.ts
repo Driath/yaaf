@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand";
 import type { AgentsSlice } from "../agent/agents-slice";
-import { ACTIONS } from "../agent/types";
+import { AGENT_ACTIONS } from "../agent/types";
 import type { WorkItemsSlice } from "../work-item/work-items-slice";
 
 export interface UiSlice {
@@ -15,7 +15,7 @@ export interface UiSlice {
 	nextAction: () => void;
 	prevAction: () => void;
 	executeAction: () => void;
-	getActions: () => typeof ACTIONS;
+	getActions: () => typeof AGENT_ACTIONS;
 }
 
 export const createUiSlice: StateCreator<
@@ -49,20 +49,29 @@ export const createUiSlice: StateCreator<
 	},
 
 	toggleActions: () => {
-		set((s) => ({ showActions: !s.showActions, actionIndex: 0 }));
+		const { workItems, selectedIndex, agents, showActions } = get();
+		if (showActions) {
+			set({ showActions: false, actionIndex: 0 });
+			return;
+		}
+		const item = workItems[selectedIndex];
+		if (!item) return;
+		const hasAgent = agents.some((a) => a.workItemId === item.id);
+		if (hasAgent) set({ showActions: true, actionIndex: 0 });
 	},
 
 	nextAction: () => {
-		set((s) => ({ actionIndex: (s.actionIndex + 1) % ACTIONS.length }));
+		set((s) => ({ actionIndex: (s.actionIndex + 1) % AGENT_ACTIONS.length }));
 	},
 
 	prevAction: () => {
 		set((s) => ({
-			actionIndex: (s.actionIndex - 1 + ACTIONS.length) % ACTIONS.length,
+			actionIndex:
+				(s.actionIndex - 1 + AGENT_ACTIONS.length) % AGENT_ACTIONS.length,
 		}));
 	},
 
-	getActions: () => ACTIONS,
+	getActions: () => AGENT_ACTIONS,
 
 	executeAction: () => {
 		const {
@@ -75,7 +84,7 @@ export const createUiSlice: StateCreator<
 		const item = workItems[selectedIndex];
 		if (!item) return;
 
-		const action = ACTIONS[actionIndex].id;
+		const action = AGENT_ACTIONS[actionIndex].id;
 
 		if (action === "kill") {
 			detachAgent(item.id);

@@ -7,8 +7,8 @@ export interface AgentProcess {
 	title: string;
 }
 
-export type Action = "kill" | "done";
-export const ACTIONS: { id: Action; icon: string }[] = [
+export type AgentAction = "kill" | "done";
+export const AGENT_ACTIONS: { id: AgentAction; icon: string }[] = [
 	{ id: "kill", icon: "✘" },
 	{ id: "done", icon: "✔" },
 ];
