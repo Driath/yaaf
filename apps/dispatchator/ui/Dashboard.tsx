@@ -152,7 +152,7 @@ export function Dashboard() {
 				</>
 			)}
 
-			<LogPanel logs={logs} maxLines={logsAvailable} width={width} />
+			{/* <LogPanel logs={logs} maxLines={logsAvailable} width={width} /> */}
 		</Box>
 	);
 }

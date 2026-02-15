@@ -26,5 +26,10 @@ dispatchator.config.ts
 .ralph/
 .ralphrc
 
-# Agent state (runtime)
-ia/state/agents/*.kill-agent
+# Temporary files
+.tmp/
+
+# Runtime state
+ia/state/
+ia/events.log
+ia/render.log
