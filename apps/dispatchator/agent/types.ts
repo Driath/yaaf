@@ -17,4 +17,5 @@ export interface SpawnOptions {
 	thinking?: boolean;
 	agentMode?: AgentMode;
 	workflow?: string;
+	project?: string;
 }

@@ -12,15 +12,19 @@ Natural language interaction with Jira. Supports multiple backends.
 **Run this check first** to determine which backend to use:
 
 ```
-1. Check if jira CLI is available:
+1. Check for Jira scripts (fastest, most reliable):
+   → Run: ls scripts/jira/*.ts
+   → If found: USE SCRIPT BACKEND
+
+2. If no scripts, check if jira CLI is available:
    → Run: which jira
    → If found: USE CLI BACKEND
 
-2. If no CLI, check for Atlassian MCP:
+3. If no scripts or CLI, check for Atlassian MCP:
    → Look for mcp__atlassian__* tools
    → If available: USE MCP BACKEND
 
-3. If neither available:
+4. If nothing available:
    → GUIDE USER TO SETUP
 ```
 
@@ -28,7 +32,8 @@ Natural language interaction with Jira. Supports multiple backends.
 |---------|-------------|-----------|
 | **CLI** | `jira` command available | `references/commands.md` |
 | **MCP** | Atlassian MCP tools available | `references/mcp.md` |
-| **None** | Neither available | Guide to install CLI |
+| **Scripts** | Fallback when CLI/MCP unavailable | Quick Reference below |
+| **None** | Nothing available | Guide to install CLI |
 
 ---
 
@@ -69,6 +74,25 @@ Natural language interaction with Jira. Supports multiple backends.
 | List projects | `mcp__atlassian__getVisibleJiraProjects` |
 
 See `references/mcp.md` for full MCP patterns.
+
+---
+
+## Quick Reference (Scripts)
+
+> Fallback when CLI and MCP are unavailable. Uses `jira.js` + API token from `.env`.
+
+| Intent | Command |
+|--------|---------|
+| Search issues | `bun scripts/jira/search-issues.ts "<jql>" [--max=50] [--fields=...]` |
+| View issue | `bun scripts/jira/get-issue.ts <KEY> [--fields=...]` |
+| Create issue | `bun scripts/jira/create-issue.ts <project> <type> <summary> [--description=...] [--labels=...] [--parent=...]` |
+| Update issue | `bun scripts/jira/update-issue.ts <KEY> [--summary=...] [--description=...] [--labels=...] [--priority=...]` |
+| List transitions | `bun scripts/jira/transition-issue.ts <KEY>` |
+| Execute transition | `bun scripts/jira/transition-issue.ts <KEY> <transition-id>` |
+| Add comment | `bun scripts/jira/add-comment.ts <KEY> <text \| ->` |
+| Link issues | `bun scripts/jira/link-issues.ts <key1> <key2> <link-type>` |
+
+All scripts output JSON. Use `-` for stdin on multi-line content.
 
 ---
 

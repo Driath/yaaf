@@ -19,7 +19,7 @@ Explores a project linked in `projects/` and produces a structured discovery rep
 ## Step 1: Fetch Ticket & Resolve Project Path
 
 ```
-1. Fetch {workItemId} from Jira (summary, description, labels)
+1. Fetch {workItemId} (summary, description, labels) using work item provider (see CLAUDE.md)
 2. Extract projectName from label IA:PROJECT:*
 3. If no IA:PROJECT:* label → HITL: ask user to select project
 4. Resolve absolute path: Bash(readlink projects/{projectName})
@@ -39,7 +39,7 @@ Using the resolved absolute path, read files with dedicated tools (Read, Glob, G
 
 ## Step 3: Post Discovery Report
 
-Post a comment on `{workItemId}`:
+Post a comment on `{workItemId}` (use work item provider commands from CLAUDE.md):
 
 ```
 ## workflow:discover-project report
@@ -65,7 +65,7 @@ Post a comment on `{workItemId}`:
 
 ## Step 4: Transition to En cours de revue
 
-Transition `{workItemId}` to **En cours de revue** (human review gate).
+Transition `{workItemId}` to **En cours de revue** using work item provider (see CLAUDE.md).
 
 ## Done
 

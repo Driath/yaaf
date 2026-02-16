@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { Subject, takeUntil } from "rxjs";
 import { readInitialSnapshots } from "../agent/adapters/state-watcher";
 import {
+	getWindowEntries,
 	killAgent,
-	killWindow,
 	setAgentWindowTitle,
 	spawnAgent,
 } from "../agent/adapters/tmux";
@@ -11,7 +11,6 @@ import { slotsAvailable$ } from "../agent/events/slots";
 import { fs$ } from "../agent/sources/fs";
 import { activeChanged } from "../agent/sources/operators/active-changed";
 import { logEvent, logLifecycle } from "../agent/sources/operators/log-event";
-import { orphanWindows } from "../agent/sources/operators/orphan-windows";
 import { staleAgent } from "../agent/sources/operators/stale-agent";
 import { statusChanged } from "../agent/sources/operators/status-changed";
 import { titleChanged } from "../agent/sources/operators/title-changed";
@@ -23,10 +22,8 @@ import { useStore } from "../store";
 import { getWorkItems$ } from "../work-item/sources";
 import { newItems } from "../work-item/sources/operators/new-items";
 import { removedItems } from "../work-item/sources/operators/removed-items";
-import { workItemStatusChanged } from "../work-item/sources/operators/status-changed";
 
 const config = getConfig();
-const workItems$ = getWorkItems$(config);
 
 // Architecture: source$ → operator → subscribe(sideEffect)
 //
@@ -35,13 +32,12 @@ const workItems$ = getWorkItems$(config);
 // Adding behavior = new operator + new subscribe line. No new observables.
 //
 //   workItems$.pipe(newItems)              → addWorkItem
-//   workItems$.pipe(removedItems)          → removeWorkItem
-//   workItems$.pipe(workItemStatusChanged) → killAgent (on done)
+//   workItems$.pipe(removedItems)          → killAgent + removeWorkItem
 //   slotsAvailable$                  → spawnAgent
 //   tmux$.pipe(windowAdded)          → attachAgent + restore snapshot
 //   tmux$.pipe(windowRemoved)        → detachAgent
 //   tmux$.pipe(activeChanged)        → setActiveWorkItem
-//   tmux$.pipe(orphanWindows)        → killAgent
+//   tmux$.pipe(staleAgent)           → detachAgent
 //   fs$.pipe(statusChanged)          → updateHookStatus
 //   fs$.pipe(titleChanged)           → updateAgentTitle
 
@@ -59,7 +55,17 @@ export function useSources() {
 	useEffect(() => {
 		logLifecycle("start");
 		const destroy$ = new Subject<void>();
+		const workItems$ = getWorkItems$(config);
 		const snapshots = readInitialSnapshots();
+
+		for (const entry of getWindowEntries()) {
+			if (entry.agentId) {
+				attachAgent(entry.agentId);
+				const snap = snapshots.get(entry.agentId);
+				if (snap?.status) updateHookStatus(entry.agentId, snap.status);
+				if (snap?.title) updateAgentTitle(entry.agentId, snap.title);
+			}
+		}
 
 		workItems$
 			.pipe(newItems, logEvent("newItem"), takeUntil(destroy$))
@@ -67,18 +73,9 @@ export function useSources() {
 
 		workItems$
 			.pipe(removedItems, logEvent("removedItem"), takeUntil(destroy$))
-			.subscribe((item) => removeWorkItem(item.id));
-
-		workItems$
-			.pipe(
-				workItemStatusChanged,
-				logEvent("workItemStatusChanged"),
-				takeUntil(destroy$),
-			)
 			.subscribe((item) => {
-				if (item.status === config.workItems[0].doneConfig.detectStatus) {
-					killAgent(item.id);
-				}
+				removeWorkItem(item.id);
+				killAgent(item.id);
 			});
 
 		slotsAvailable$
@@ -90,6 +87,7 @@ export function useSources() {
 					thinking: workItem.thinking,
 					agentMode: workItem.agentMode,
 					workflow: workItem.workflow,
+					project: workItem.project,
 				});
 			});
 
@@ -109,10 +107,6 @@ export function useSources() {
 		tmux$
 			.pipe(activeChanged, logEvent("activeChanged"), takeUntil(destroy$))
 			.subscribe((agentId) => setActiveWorkItem(agentId));
-
-		tmux$
-			.pipe(orphanWindows, logEvent("orphanWindow"), takeUntil(destroy$))
-			.subscribe((windowIndex) => killWindow(windowIndex));
 
 		tmux$
 			.pipe(staleAgent, logEvent("staleAgent"), takeUntil(destroy$))
