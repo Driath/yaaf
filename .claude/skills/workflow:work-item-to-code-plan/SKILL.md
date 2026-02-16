@@ -79,7 +79,7 @@ Parent: {workItemId}
 Summary: "Implement: {original summary}"
 Description: {approved plan}
 Labels: IA:MODEL:{suggested}, IA:WORKFLOW:IMPLEMENT, IA:PROJECT:{projectName}
-Status: Agent-Ready
+Status: À faire
 ```
 
 Then `/exit`.

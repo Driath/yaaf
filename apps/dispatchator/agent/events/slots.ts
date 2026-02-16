@@ -1,4 +1,5 @@
 import { interval, map, merge, Observable } from "rxjs";
+import { getConfig } from "../../config";
 import { useStore } from "../../store";
 import type { WorkItem } from "../../work-item/types";
 
@@ -9,9 +10,10 @@ export interface SlotsPayload {
 
 function check(): SlotsPayload | null {
 	const s = useStore.getState();
+	const spawnStatus = getConfig().workItems[0].spawnStatus;
 	const attachedIds = new Set(s.agents.map((a) => a.workItemId));
 	const queued = s.workItems.filter(
-		(w) => !attachedIds.has(w.id) && w.status === "Agent-Ready",
+		(w) => !attachedIds.has(w.id) && w.status === spawnStatus,
 	);
 	const activeAgents = s.agents.filter(
 		(a) => a.hookStatus !== "waiting" && a.hookStatus !== "idle",

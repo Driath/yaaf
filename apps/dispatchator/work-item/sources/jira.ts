@@ -1,7 +1,6 @@
 import {
 	distinctUntilChanged,
 	type Observable,
-	scan,
 	share,
 	switchMap,
 	timer,
@@ -12,6 +11,7 @@ import {
 	hasThinking,
 	parseAgentMode,
 	parseModelFromLabels,
+	parseProject,
 	parseWorkflow,
 } from "../labels";
 import type { WorkItem } from "../types";
@@ -24,47 +24,39 @@ export function createJiraSource$(
 
 	return timer(0, config.polling.jiraInterval).pipe(
 		switchMap(async () => {
-			const items: WorkItem[] = [];
-			for (const jql of sourceConfig.queries) {
-				const result =
-					await jiraClient.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
-						jql,
-						fields: [...sourceConfig.fields, "*navigable"],
-						maxResults: sourceConfig.maxResults,
-					});
-				for (const issue of result.issues || []) {
-					const fields = issue.fields as {
-						summary?: string;
-						labels?: string[];
-						status?: { name?: string };
-						parent?: { key?: string };
-						comment?: { total?: number };
-					};
-					const labels = fields.labels || [];
-					items.push({
-						id: issue.key,
-						summary: fields.summary || "No summary",
-						status: fields.status?.name ?? "",
-						model: parseModelFromLabels(labels, config.agents.defaultModel),
-						thinking: hasThinking(labels),
-						agentMode: parseAgentMode(labels),
-						workflow: parseWorkflow(labels, config.agents.defaultWorkflow),
-						parentId: fields.parent?.key,
-						commentCount: fields.comment?.total ?? 0,
-					});
-				}
-			}
+			const { draft, done } = sourceConfig.excludeStatuses;
+			const jql = `project = ${sourceConfig.project} AND status not in ("${draft}", "${done}") ORDER BY rank ASC`;
+			const result =
+				await jiraClient.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
+					jql,
+					fields: [...sourceConfig.fields, "*navigable"],
+					maxResults: sourceConfig.maxResults,
+				});
+			const items: WorkItem[] = (result.issues || []).map((issue) => {
+				const fields = issue.fields as {
+					summary?: string;
+					labels?: string[];
+					status?: { name?: string };
+					parent?: { key?: string };
+					comment?: { total?: number };
+				};
+				const labels = fields.labels || [];
+				return {
+					id: issue.key,
+					summary: fields.summary || "No summary",
+					status: fields.status?.name ?? "",
+					model: parseModelFromLabels(labels, config.agents.defaultModel),
+					thinking: hasThinking(labels),
+					agentMode: parseAgentMode(labels),
+					workflow: parseWorkflow(labels, config.agents.defaultWorkflow),
+					project: parseProject(labels),
+					parentId: fields.parent?.key,
+					commentCount: fields.comment?.total ?? 0,
+				};
+			});
 			const ids = new Set(items.map((i) => i.id));
 			return items.filter((i) => !i.parentId || ids.has(i.parentId));
 		}),
-		scan((prev, curr) => {
-			const currIds = new Set(curr.map((i) => i.id));
-			const doneStatus = sourceConfig.doneConfig.detectStatus;
-			const kept = prev.filter(
-				(i) => !currIds.has(i.id) && i.status !== doneStatus,
-			);
-			return [...curr, ...kept];
-		}, [] as WorkItem[]),
 		distinctUntilChanged(
 			(prev, curr) =>
 				prev.map((i) => `${i.id}:${i.status}`).join() ===

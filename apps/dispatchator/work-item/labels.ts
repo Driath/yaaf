@@ -21,6 +21,15 @@ export function parseAgentMode(labels: string[]): AgentMode {
 	return "default";
 }
 
+export function parseProject(labels: string[]): string | undefined {
+	for (const label of labels) {
+		if (label.startsWith("IA:PROJECT:")) {
+			return label.replace("IA:PROJECT:", "").toLowerCase();
+		}
+	}
+	return undefined;
+}
+
 export function parseWorkflow(
 	labels: string[],
 	defaultWorkflow: string,

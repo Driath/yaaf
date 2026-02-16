@@ -10,11 +10,12 @@ export interface JiraProviderConfig {
 export interface WorkItemSourceConfig {
 	provider: "jira";
 	providerConfig: JiraProviderConfig;
-	queries: string[];
-	doneConfig: {
-		detectStatus: string;
-		targetStatus: string;
+	project: string;
+	excludeStatuses: {
+		draft: string;
+		done: string;
 	};
+	spawnStatus: string;
 	maxResults: number;
 	fields: string[];
 }
@@ -68,11 +69,12 @@ function buildFallbackConfig(): DispatchatorConfig {
 					email: process.env.JIRA_EMAIL ?? "",
 					token: process.env.JIRA_TOKEN ?? "",
 				},
-				queries: ['project = KAN AND status = "Agent-Ready" ORDER BY rank ASC'],
-				doneConfig: {
-					detectStatus: "Done",
-					targetStatus: "Done",
+				project: "KAN",
+				excludeStatuses: {
+					draft: "Brouillon",
+					done: "Terminé",
 				},
+				spawnStatus: "À faire",
 				maxResults: 50,
 				fields: ["key", "summary", "description", "labels", "comment"],
 			},

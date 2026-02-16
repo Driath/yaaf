@@ -8,6 +8,7 @@ export interface WorkItem {
 	thinking: boolean;
 	agentMode: AgentMode;
 	workflow: string;
+	project?: string;
 	status: string;
 	parentId?: string;
 	commentCount: number;

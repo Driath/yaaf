@@ -1,7 +1,19 @@
 import { spawn, spawnSync } from "node:child_process";
+import { readlinkSync } from "node:fs";
+import { join } from "node:path";
 import { getConfig } from "../../config";
 import type { Model, SpawnOptions } from "../types";
 import { clearAgentState } from "./state-watcher";
+
+function resolveProjectDir(cwd: string, project?: string): string {
+	if (!project) return "";
+	try {
+		const resolved = readlinkSync(join(cwd, "projects", project));
+		return `--add-dir ${resolved} `;
+	} catch {
+		return "";
+	}
+}
 
 const AGENTS_SESSION = "yaaf-agents";
 const AGENT_TAG = "@agent-id";
@@ -92,7 +104,8 @@ export async function spawnAgent(
 		: "";
 	const modeFlag =
 		agentMode !== "default" ? `--permission-mode ${agentMode} ` : "";
-	const cmd = `cd ${cwd} && YAAF_AGENT_ID=${ticketId} exec ${claudePath} --model ${model} ${thinkingFlag}${modeFlag}"${prompt}"`;
+	const addDirsFlag = resolveProjectDir(cwd, options.project);
+	const cmd = `cd ${cwd} && YAAF_AGENT_ID=${ticketId} exec ${claudePath} --model ${model} ${thinkingFlag}${modeFlag}${addDirsFlag}-- "${prompt}"`;
 	console.log(
 		`[spawn] ${ticketId}: workflow=${workflow}, thinking=${thinking}, cmd=${cmd}`,
 	);
@@ -180,11 +193,10 @@ export function killAgent(ticketId: string): boolean {
 }
 
 export function killWindow(windowIndex: number): boolean {
-	const result = spawnSync("tmux", [
-		"kill-window",
-		"-t",
-		`${AGENTS_SESSION}:${windowIndex}`,
-	]);
+	const target = `${AGENTS_SESSION}:${windowIndex}`;
+	const result = spawnSync("tmux", ["kill-window", "-t", target], {
+		env: { ...process.env, TMUX: "" },
+	});
 	return result.status === 0;
 }
 

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import figures from "figures";
 import { Box, Text, useInput, useStdout } from "ink";
 import { useEffect, useState } from "react";
+import { getConfig } from "../config";
 import { useLogStore } from "../log/store";
 import { LogPanel } from "../log/ui/LogPanel";
 import { useStore } from "../store";
@@ -89,6 +90,8 @@ function QueueCount({ queued }: { queued: number }) {
 	return <StatusText status={status}>{`Q:${queued}`}</StatusText>;
 }
 
+const config = getConfig();
+
 export function Dashboard() {
 	const { width, height } = useTerminalSize();
 
@@ -124,8 +127,9 @@ export function Dashboard() {
 		(a) => a.hookStatus === "waiting" || a.hookStatus === "idle",
 	).length;
 	const active = agents.length - waiting;
+	const spawnStatus = config.workItems[0].spawnStatus;
 	const queued = workItems.filter(
-		(w) => !agentsByWorkItem.has(w.id) && w.status === "Agent-Ready",
+		(w) => !agentsByWorkItem.has(w.id) && w.status === spawnStatus,
 	).length;
 	const titleText = `dispatchator: ${active}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
 
@@ -169,6 +173,17 @@ export function Dashboard() {
 
 	return (
 		<Box flexDirection="column" width={width} height={height}>
+			{workItems.length === 0 && (
+				<Box flexShrink={0}>
+					<Text dimColor>{"WI:Empty → "}</Text>
+					<Text color="yellow">
+						{config.workItems
+							.map((src) => `${src.project} → "${src.spawnStatus}"`)
+							.join(" | ")}
+					</Text>
+				</Box>
+			)}
+
 			{layout.inline.filter((c) => c.label).length > 1 && (
 				<>
 					<Box flexShrink={0}>

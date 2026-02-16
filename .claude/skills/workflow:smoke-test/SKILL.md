@@ -9,7 +9,7 @@ agent: workflow
 
 Minimal workflow that validates the core dispatchator mechanics:
 1. Jira read (fetch ticket)
-2. Subtask creation (in Agent-Ready, with workflow label)
+2. Subtask creation (in À faire, with workflow label)
 3. Comment posting (triggers commentCount anti-respawn)
 
 ## Input
@@ -34,7 +34,7 @@ Create a subtask on the work item:
 - **description**: `Subtask created by workflow:smoke-test on {workItemId}`
 - **labels**: `IA:WORKFLOW:smoke-test-child` (so the dispatcher picks it up and runs the child workflow)
 
-Then transition the subtask to **Agent-Ready**.
+Then transition the subtask to **À faire**.
 
 Do NOT transition it to Terminé. The dispatcher should spawn an agent on it.
 
@@ -46,7 +46,7 @@ Post a comment on `{workItemId}` with the workflow report:
 ## workflow:smoke-test report
 
 - Ticket: {workItemId} ({summary})
-- Subtask created: {subtaskKey} → Agent-Ready
+- Subtask created: {subtaskKey} → À faire
 - Timestamp: {ISO 8601}
 - Status: PASS
 ```
