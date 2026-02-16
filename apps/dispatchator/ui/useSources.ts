@@ -3,7 +3,6 @@ import { Subject, takeUntil } from "rxjs";
 import { readInitialSnapshots } from "../agent/adapters/state-watcher";
 import {
 	killAgent,
-	killWindow,
 	setAgentWindowTitle,
 	spawnAgent,
 } from "../agent/adapters/tmux";
@@ -11,7 +10,6 @@ import { slotsAvailable$ } from "../agent/events/slots";
 import { fs$ } from "../agent/sources/fs";
 import { activeChanged } from "../agent/sources/operators/active-changed";
 import { logEvent, logLifecycle } from "../agent/sources/operators/log-event";
-import { orphanWindows } from "../agent/sources/operators/orphan-windows";
 import { staleAgent } from "../agent/sources/operators/stale-agent";
 import { statusChanged } from "../agent/sources/operators/status-changed";
 import { titleChanged } from "../agent/sources/operators/title-changed";
@@ -41,7 +39,7 @@ const workItems$ = getWorkItems$(config);
 //   tmux$.pipe(windowAdded)          → attachAgent + restore snapshot
 //   tmux$.pipe(windowRemoved)        → detachAgent
 //   tmux$.pipe(activeChanged)        → setActiveWorkItem
-//   tmux$.pipe(orphanWindows)        → killAgent
+//   tmux$.pipe(staleAgent)           → detachAgent
 //   fs$.pipe(statusChanged)          → updateHookStatus
 //   fs$.pipe(titleChanged)           → updateAgentTitle
 
@@ -109,10 +107,6 @@ export function useSources() {
 		tmux$
 			.pipe(activeChanged, logEvent("activeChanged"), takeUntil(destroy$))
 			.subscribe((agentId) => setActiveWorkItem(agentId));
-
-		tmux$
-			.pipe(orphanWindows, logEvent("orphanWindow"), takeUntil(destroy$))
-			.subscribe((windowIndex) => killWindow(windowIndex));
 
 		tmux$
 			.pipe(staleAgent, logEvent("staleAgent"), takeUntil(destroy$))
