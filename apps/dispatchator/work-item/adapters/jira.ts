@@ -16,6 +16,9 @@ export function createJiraClient(config: JiraProviderConfig): Version3Client {
 	});
 }
 
-export function buildDoneJql(doneColumn: string, activeIds: string[]): string {
-	return `key in (${activeIds.join(",")}) AND status = "${doneColumn}"`;
+export function buildDoneJql(
+	detectStatus: string,
+	activeIds: string[],
+): string {
+	return `key in (${activeIds.join(",")}) AND status = "${detectStatus}"`;
 }

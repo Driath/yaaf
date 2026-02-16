@@ -2,6 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(touch ia/state/agents/*)",
+      "Bash(readlink *)",
+      "Bash(printf *)",
+      "Bash(ls *)",
       "Bash(.claude/skills/**/scripts/*)",
       "mcp__plugin_atlassian_atlassian__atlassianUserInfo",
       "mcp__plugin_atlassian_atlassian__getAccessibleAtlassianResources",

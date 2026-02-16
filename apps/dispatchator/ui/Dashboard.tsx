@@ -125,7 +125,7 @@ export function Dashboard() {
 	).length;
 	const active = agents.length - waiting;
 	const queued = workItems.filter(
-		(w) => !agentsByWorkItem.has(w.id) && w.commentCount === 0,
+		(w) => !agentsByWorkItem.has(w.id) && w.status === "Agent-Ready",
 	).length;
 	const titleText = `dispatchator: ${active}/${maxAgents} active | ${waiting} waiting | ${queued} queued`;
 

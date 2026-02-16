@@ -1,6 +1,7 @@
 import {
 	distinctUntilChanged,
 	type Observable,
+	scan,
 	share,
 	switchMap,
 	timer,
@@ -35,6 +36,7 @@ export function createJiraSource$(
 					const fields = issue.fields as {
 						summary?: string;
 						labels?: string[];
+						status?: { name?: string };
 						parent?: { key?: string };
 						comment?: { total?: number };
 					};
@@ -42,6 +44,7 @@ export function createJiraSource$(
 					items.push({
 						id: issue.key,
 						summary: fields.summary || "No summary",
+						status: fields.status?.name ?? "",
 						model: parseModelFromLabels(labels, config.agents.defaultModel),
 						thinking: hasThinking(labels),
 						agentMode: parseAgentMode(labels),
@@ -54,10 +57,18 @@ export function createJiraSource$(
 			const ids = new Set(items.map((i) => i.id));
 			return items.filter((i) => !i.parentId || ids.has(i.parentId));
 		}),
+		scan((prev, curr) => {
+			const currIds = new Set(curr.map((i) => i.id));
+			const doneStatus = sourceConfig.doneConfig.detectStatus;
+			const kept = prev.filter(
+				(i) => !currIds.has(i.id) && i.status !== doneStatus,
+			);
+			return [...curr, ...kept];
+		}, [] as WorkItem[]),
 		distinctUntilChanged(
 			(prev, curr) =>
-				prev.map((i) => `${i.id}:${i.commentCount}`).join() ===
-				curr.map((i) => `${i.id}:${i.commentCount}`).join(),
+				prev.map((i) => `${i.id}:${i.status}`).join() ===
+				curr.map((i) => `${i.id}:${i.status}`).join(),
 		),
 		share(),
 	);

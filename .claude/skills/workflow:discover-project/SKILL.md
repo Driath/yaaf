@@ -1,7 +1,7 @@
 ---
 name: workflow:discover-project
 description: Explore a linked project, analyze its structure and stack, post a discovery report.
-model: sonnet
+model: haiku
 agent: workflow
 ---
 
@@ -22,10 +22,10 @@ Explores a project linked in `projects/` and produces a structured discovery rep
 1. Fetch {workItemId} from Jira (summary, description, labels)
 2. Extract projectName from label IA:PROJECT:*
 3. If no IA:PROJECT:* label → HITL: ask user to select project
-4. Resolve absolute path: readlink projects/{projectName}
+4. Resolve absolute path: Bash(readlink projects/{projectName})
 ```
 
-The resolved absolute path is used for ALL file operations in subsequent steps.
+The `readlink` command is pre-authorized. The resolved absolute path is used for ALL file operations in subsequent steps.
 
 ## Step 2: Explore Project
 
@@ -63,9 +63,9 @@ Post a comment on `{workItemId}`:
 {ISO 8601}
 ```
 
-## Step 4: Transition to Terminé
+## Step 4: Transition to En cours de revue
 
-Transition `{workItemId}` to **Terminé**.
+Transition `{workItemId}` to **En cours de revue** (human review gate).
 
 ## Done
 

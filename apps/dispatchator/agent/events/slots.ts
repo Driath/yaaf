@@ -11,7 +11,7 @@ function check(): SlotsPayload | null {
 	const s = useStore.getState();
 	const attachedIds = new Set(s.agents.map((a) => a.workItemId));
 	const queued = s.workItems.filter(
-		(w) => !attachedIds.has(w.id) && w.commentCount === 0,
+		(w) => !attachedIds.has(w.id) && w.status === "Agent-Ready",
 	);
 	const activeAgents = s.agents.filter(
 		(a) => a.hookStatus !== "waiting" && a.hookStatus !== "idle",
