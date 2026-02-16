@@ -27,6 +27,10 @@ Actions requiring EXPLICIT confirmation (HITL via AskUserQuestion):
 
 - No unnecessary comments - code should be self-documenting
 
+## RxJS Debugging
+
+When a subscriber triggers unexpected behavior, the bug is in the source or operator — never in the subscribe. Fix upstream: trace the pipe back to the source that emits a wrong signal. Never patch downstream.
+
 ## TypeScript Architecture
 
 Rules for any TypeScript module (dispatchator, future modules):

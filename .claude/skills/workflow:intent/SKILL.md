@@ -7,18 +7,6 @@ agent: workflow
 
 # workflow:intent
 
-**IMPORTANT: Before doing ANYTHING else, fetch the ticket and check its labels.**
-
-If the ticket has ANY label starting with `IA:WORKFLOW:` then run:
-```bash
-touch ia/state/agents/{workItemId}.kill-agent
-```
-Then STOP. Do nothing else. The workflow is done.
-
----
-
-Only continue below if NO `IA:WORKFLOW:*` label exists:
-
 ## Input
 
 `workItemId` - Jira ticket ID (e.g., KAN-4)
@@ -43,8 +31,15 @@ Extract `IA:PROJECT:*` from labels. If missing → ask user.
 Add IA:WORKFLOW:{workflow} to {workItemId}?
 ```
 
-## Step 5: Update
+## Step 5: Create Subtask & Exit
 
-1. Add `IA:WORKFLOW:{workflow}` label
-2. Add collected argument labels
-3. `touch ia/state/agents/{workItemId}.kill-agent`
+1. Add `IA:WORKFLOW:{workflow}` label to the parent ticket (for tracking)
+2. Read the target workflow's SKILL.md header to extract `model`
+3. Map the model to label: `sonnet` → `IA:MODEL:MEDIUM`, `opus` → `IA:MODEL:STRONG`, `haiku` → omit (default)
+4. Create a **Jira subtask** under `{workItemId}` with:
+   - Summary: same as parent
+   - Labels: `IA:WORKFLOW:{workflow}` + model label (if not haiku) + collected argument labels
+   - Description: copy from parent
+5. Transition the subtask to **Agent-Ready**
+
+The dispatchator will pick up the subtask with the correct workflow label and spawn a new agent.

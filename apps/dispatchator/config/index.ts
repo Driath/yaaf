@@ -11,7 +11,10 @@ export interface WorkItemSourceConfig {
 	provider: "jira";
 	providerConfig: JiraProviderConfig;
 	queries: string[];
-	doneColumn: string;
+	doneConfig: {
+		detectStatus: string;
+		targetStatus: string;
+	};
 	maxResults: number;
 	fields: string[];
 }
@@ -66,7 +69,10 @@ function buildFallbackConfig(): DispatchatorConfig {
 					token: process.env.JIRA_TOKEN ?? "",
 				},
 				queries: ['project = KAN AND status = "Agent-Ready" ORDER BY rank ASC'],
-				doneColumn: "Done",
+				doneConfig: {
+					detectStatus: "Done",
+					targetStatus: "Done",
+				},
 				maxResults: 50,
 				fields: ["key", "summary", "description", "labels", "comment"],
 			},

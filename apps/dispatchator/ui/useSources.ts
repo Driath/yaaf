@@ -21,9 +21,9 @@ import { tmux$ } from "../agent/sources/tmux";
 import { getConfig } from "../config";
 import { useStore } from "../store";
 import { getWorkItems$ } from "../work-item/sources";
-import { completedParents } from "../work-item/sources/operators/completed-parents";
 import { newItems } from "../work-item/sources/operators/new-items";
 import { removedItems } from "../work-item/sources/operators/removed-items";
+import { workItemStatusChanged } from "../work-item/sources/operators/status-changed";
 
 const config = getConfig();
 const workItems$ = getWorkItems$(config);
@@ -34,9 +34,9 @@ const workItems$ = getWorkItems$(config);
 // Operators filter/transform events per concern. Subscribers trigger side effects.
 // Adding behavior = new operator + new subscribe line. No new observables.
 //
-//   workItems$.pipe(newItems)        → addWorkItem
-//   workItems$.pipe(removedItems)    → removeWorkItem + killAgent + clearAgentState
-//   workItems$.pipe(completedParents) → killAgent
+//   workItems$.pipe(newItems)              → addWorkItem
+//   workItems$.pipe(removedItems)          → removeWorkItem
+//   workItems$.pipe(workItemStatusChanged) → killAgent (on done)
 //   slotsAvailable$                  → spawnAgent
 //   tmux$.pipe(windowAdded)          → attachAgent + restore snapshot
 //   tmux$.pipe(windowRemoved)        → detachAgent
@@ -67,16 +67,18 @@ export function useSources() {
 
 		workItems$
 			.pipe(removedItems, logEvent("removedItem"), takeUntil(destroy$))
-			.subscribe((item) => {
-				removeWorkItem(item.id);
-				killAgent(item.id);
-			});
+			.subscribe((item) => removeWorkItem(item.id));
 
 		workItems$
-			.pipe(completedParents, logEvent("completedParent"), takeUntil(destroy$))
+			.pipe(
+				workItemStatusChanged,
+				logEvent("workItemStatusChanged"),
+				takeUntil(destroy$),
+			)
 			.subscribe((item) => {
-				killAgent(item.id);
-				detachAgent(item.id);
+				if (item.status === config.workItems[0].doneConfig.detectStatus) {
+					killAgent(item.id);
+				}
 			});
 
 		slotsAvailable$
