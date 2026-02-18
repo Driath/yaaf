@@ -12,6 +12,7 @@ import {
 	parseAgentMode,
 	parseModelFromLabels,
 	parseProject,
+	parseProvider,
 	parseWorkflow,
 } from "../labels";
 import type { WorkItem } from "../types";
@@ -49,6 +50,7 @@ export function createJiraSource$(
 					thinking: hasThinking(labels),
 					agentMode: parseAgentMode(labels),
 					workflow: parseWorkflow(labels, config.agents.defaultWorkflow),
+					provider: parseProvider(labels, config.agents.defaultProvider),
 					project: parseProject(labels),
 					parentId: fields.parent?.key,
 					commentCount: fields.comment?.total ?? 0,
@@ -59,8 +61,8 @@ export function createJiraSource$(
 		}),
 		distinctUntilChanged(
 			(prev, curr) =>
-				prev.map((i) => `${i.id}:${i.status}`).join() ===
-				curr.map((i) => `${i.id}:${i.status}`).join(),
+				prev.map((i) => `${i.id}:${i.status}:${i.workflow}`).join() ===
+				curr.map((i) => `${i.id}:${i.status}:${i.workflow}`).join(),
 		),
 		share(),
 	);

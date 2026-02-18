@@ -2,16 +2,16 @@ import { spawn, spawnSync } from "node:child_process";
 import { readlinkSync } from "node:fs";
 import { join } from "node:path";
 import { getConfig } from "../../config";
-import type { Model, SpawnOptions } from "../types";
+import { getProvider } from "../providers";
+import type { SpawnOptions } from "../types";
 import { clearAgentState } from "./state-watcher";
 
-function resolveProjectDir(cwd: string, project?: string): string {
-	if (!project) return "";
+function resolveProjectDir(cwd: string, project?: string): string | undefined {
+	if (!project) return undefined;
 	try {
-		const resolved = readlinkSync(join(cwd, "projects", project));
-		return `--add-dir ${resolved} `;
+		return readlinkSync(join(cwd, "projects", project));
 	} catch {
-		return "";
+		return undefined;
 	}
 }
 
@@ -23,15 +23,6 @@ export interface WindowEntry {
 	name: string;
 	agentId: string | null;
 	paneTitle: string;
-}
-
-function resolveClaudePath(path: "auto" | string): string {
-	if (path !== "auto") return path;
-	const result = spawnSync("which", ["claude"]);
-	if (result.status === 0) return result.stdout.toString().trim();
-	throw new Error(
-		"Could not find claude CLI. Set agents.claudePath in dispatchator.config.ts",
-	);
 }
 
 function hasAgentsSession(): boolean {
@@ -80,35 +71,28 @@ export function getWindowEntries(): WindowEntry[] {
 	return listWindowEntries();
 }
 
-const MODEL_MAP: Record<Model, string> = {
-	small: "haiku",
-	medium: "sonnet",
-	strong: "opus",
-};
-
 export async function spawnAgent(
 	ticketId: string,
 	_summary: string,
 	options: SpawnOptions = {},
 ): Promise<string | null> {
 	const config = getConfig();
-	const claudePath = resolveClaudePath(config.agents.claudePath);
+	const providerName = options.provider || config.agents.defaultProvider;
+	const provider = getProvider(providerName);
 	const cwd = process.cwd();
-	const model = MODEL_MAP[options.model || config.agents.defaultModel];
-	const thinking = options.thinking || false;
-	const agentMode = options.agentMode || "default";
-	const workflow = options.workflow || config.agents.defaultWorkflow;
-	const prompt = `/workflow:${workflow} ${ticketId}`;
-	const thinkingFlag = thinking
-		? "--settings '{\"alwaysThinkingEnabled\":true}' "
-		: "";
-	const modeFlag =
-		agentMode !== "default" ? `--permission-mode ${agentMode} ` : "";
-	const addDirsFlag = resolveProjectDir(cwd, options.project);
-	const cmd = `cd ${cwd} && YAAF_AGENT_ID=${ticketId} exec ${claudePath} --model ${model} ${thinkingFlag}${modeFlag}${addDirsFlag}-- "${prompt}"`;
-	console.log(
-		`[spawn] ${ticketId}: workflow=${workflow}, thinking=${thinking}, cmd=${cmd}`,
+	const providerPath = provider.resolvePath(
+		config.agents.providerPaths[providerName] || "auto",
 	);
+	const cmd = provider.buildCommand(providerPath, {
+		cwd,
+		ticketId,
+		model: options.model || config.agents.defaultModel,
+		thinking: options.thinking || false,
+		agentMode: options.agentMode || "default",
+		workflow: options.workflow || config.agents.defaultWorkflow,
+		projectDir: resolveProjectDir(cwd, options.project),
+	});
+	console.log(`[spawn] ${ticketId}: provider=${providerName}, cmd=${cmd}`);
 
 	if (!hasAgentsSession()) {
 		return Promise.resolve(null);

@@ -1,3 +1,5 @@
+import type { Provider } from "./providers/types";
+
 export type Model = "small" | "medium" | "strong";
 export type AgentMode = "default" | "plan";
 
@@ -13,6 +15,7 @@ export const AGENT_ACTIONS: { id: AgentAction; icon: string }[] = [
 ];
 
 export interface SpawnOptions {
+	provider?: Provider;
 	model?: Model;
 	thinking?: boolean;
 	agentMode?: AgentMode;
