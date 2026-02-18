@@ -2,6 +2,10 @@
 
 Agent skills framework for Claude Code.
 
+## Identity
+
+**MUST** load `SOUL.md` at the start of every session. This defines who you are, how you communicate, and your personality. It does not override technical rules — it shapes how you express them.
+
 ## Naming Conventions
 
 Skills follow naming conventions that **require** loading base rules:
