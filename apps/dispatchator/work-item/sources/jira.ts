@@ -25,8 +25,7 @@ export function createJiraSource$(
 
 	return timer(0, config.polling.jiraInterval).pipe(
 		switchMap(async () => {
-			const { draft, done } = sourceConfig.excludeStatuses;
-			const jql = `project = ${sourceConfig.project} AND status not in ("${draft}", "${done}") ORDER BY rank ASC`;
+			const jql = `project = ${sourceConfig.project} AND status = "${sourceConfig.spawnStatus}" ORDER BY rank ASC`;
 			const result =
 				await jiraClient.issueSearch.searchForIssuesUsingJqlEnhancedSearch({
 					jql,

@@ -12,10 +12,6 @@ export interface WorkItemSourceConfig {
 	provider: "jira";
 	providerConfig: JiraProviderConfig;
 	project: string;
-	excludeStatuses: {
-		draft: string;
-		done: string;
-	};
 	spawnStatus: string;
 	maxResults: number;
 	fields: string[];
@@ -72,11 +68,7 @@ function buildFallbackConfig(): DispatchatorConfig {
 					token: process.env.JIRA_TOKEN ?? "",
 				},
 				project: "KAN",
-				excludeStatuses: {
-					draft: "Brouillon",
-					done: "Terminé",
-				},
-				spawnStatus: "À faire",
+				spawnStatus: "Todo",
 				maxResults: 50,
 				fields: ["key", "summary", "description", "labels", "comment"],
 			},
