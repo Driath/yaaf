@@ -24,6 +24,9 @@ projects/
 # Dispatchator user config
 dispatchator.config.ts
 
+# Personal soul customization
+SOUL_CUSTOM.md
+
 # Ralph
 .ralph/
 .ralphrc
