@@ -1,3 +1,4 @@
+import type { Provider } from "../agent/providers/types";
 import type { AgentMode, Model } from "./types";
 
 export function parseModelFromLabels(
@@ -28,6 +29,17 @@ export function parseProject(labels: string[]): string | undefined {
 		}
 	}
 	return undefined;
+}
+
+export function parseProvider(
+	labels: string[],
+	defaultProvider: Provider,
+): Provider {
+	for (const label of labels) {
+		if (label === "IA:PROVIDER:CLAUDE") return "claude";
+		if (label === "IA:PROVIDER:GEMINI") return "gemini";
+	}
+	return defaultProvider;
 }
 
 export function parseWorkflow(

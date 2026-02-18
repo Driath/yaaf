@@ -83,6 +83,7 @@ export function useSources() {
 			.subscribe(({ workItem }) => {
 				attachAgent(workItem.id);
 				spawnAgent(workItem.id, workItem.summary, {
+					provider: workItem.provider,
 					model: workItem.model,
 					thinking: workItem.thinking,
 					agentMode: workItem.agentMode,

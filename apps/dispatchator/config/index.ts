@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import type { Provider } from "../agent/providers/types";
 
 export interface JiraProviderConfig {
 	site: string;
@@ -30,7 +31,8 @@ export interface DispatchatorConfig {
 		maxConcurrent: number;
 		defaultModel: "small" | "medium" | "strong";
 		defaultWorkflow: string;
-		claudePath: "auto" | string;
+		defaultProvider: Provider;
+		providerPaths: Partial<Record<Provider, "auto" | string>>;
 	};
 }
 
@@ -87,7 +89,8 @@ function buildFallbackConfig(): DispatchatorConfig {
 			maxConcurrent: 2,
 			defaultModel: "small",
 			defaultWorkflow: "intent",
-			claudePath: "auto",
+			defaultProvider: "claude",
+			providerPaths: { claude: "auto", gemini: "auto" },
 		},
 	};
 }
